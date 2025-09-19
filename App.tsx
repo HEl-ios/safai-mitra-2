@@ -1,0 +1,112 @@
+
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Badge, BadgeSlug, HistoryItem, WasteClassificationResult, ReportHistoryItem } from './types.ts';
+import { BADGE_DEFINITIONS } from './constants.tsx';
+import Header from './components/Header.tsx';
+import Dashboard from './components/Dashboard.tsx';
+import WasteClassifier from './components/WasteClassifier.tsx';
+import FacilityLocator from './components/FacilityLocator.tsx';
+import Quiz from './components/Quiz.tsx';
+import ReportWaste from './components/ReportWaste.tsx';
+import Chatbot from './components/Chatbot.tsx';
+import BottomNavBar from './components/BottomNavBar.tsx';
+
+const App: React.FC = () => {
+  const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
+  const [userPoints, setUserPoints] = useState<number>(0);
+  const [unlockedBadges, setUnlockedBadges] = useState<Set<BadgeSlug>>(new Set());
+  const [reportCount, setReportCount] = useState<number>(0);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+
+  const addPoints = useCallback((points: number) => {
+    setUserPoints(prev => prev + points);
+  }, []);
+
+  const unlockBadge = useCallback((slug: BadgeSlug) => {
+    setUnlockedBadges(prev => {
+      const newBadges = new Set(prev);
+      if (!newBadges.has(slug)) {
+        newBadges.add(slug);
+        const badge = BADGE_DEFINITIONS.find(b => b.slug === slug);
+        if (badge) {
+          addPoints(badge.points);
+          // TODO: In a real app, show a toast notification here to celebrate!
+        }
+        console.log(`Badge unlocked: ${slug}`);
+      }
+      return newBadges;
+    });
+  }, [addPoints]);
+  
+  const incrementReportCount = useCallback(() => {
+    setReportCount(prev => prev + 1);
+  }, []);
+
+  const addClassificationToHistory = useCallback((result: WasteClassificationResult) => {
+    const newHistoryItem: HistoryItem = {
+      id: `class-${Date.now()}`,
+      type: 'classification',
+      timestamp: new Date(),
+      data: result,
+    };
+    setHistory(prev => [newHistoryItem, ...prev]);
+  }, []);
+
+  const addReportToHistory = useCallback((reportData: ReportHistoryItem['data']) => {
+    const newHistoryItem: HistoryItem = {
+      id: `report-${Date.now()}`,
+      type: 'report',
+      timestamp: new Date(),
+      data: reportData,
+    };
+    setHistory(prev => [newHistoryItem, ...prev]);
+  }, []);
+
+  useEffect(() => {
+    if (reportCount === 1) {
+      unlockBadge('eco-reporter');
+    }
+    if (reportCount === 3) {
+      unlockBadge('community-helper');
+    }
+  }, [reportCount, unlockBadge]);
+  
+  const renderView = () => {
+    switch (currentView) {
+      case View.CLASSIFIER:
+        return <WasteClassifier unlockBadge={unlockBadge} addPoints={addPoints} addClassificationToHistory={addClassificationToHistory} />;
+      case View.LOCATOR:
+        return <FacilityLocator />;
+      case View.QUIZ:
+        return <Quiz unlockBadge={unlockBadge} addPoints={addPoints} />;
+      case View.REPORT:
+        return <ReportWaste incrementReportCount={incrementReportCount} addReportToHistory={addReportToHistory} />;
+      case View.CHATBOT:
+        return <Chatbot unlockBadge={unlockBadge} />;
+      case View.DASHBOARD:
+      default:
+        return (
+          <Dashboard
+            setView={setCurrentView}
+            userPoints={userPoints}
+            unlockedBadges={Array.from(unlockedBadges).map(slug => BADGE_DEFINITIONS.find(b => b.slug === slug)).filter(Boolean) as Badge[]}
+            history={history}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="bg-slate-50 min-h-screen text-gray-800 pb-28">
+      <Header setView={setCurrentView} userPoints={userPoints} currentView={currentView} />
+      <main className="p-4 sm:p-6 lg:p-8">
+        <div key={currentView} className="page-transition-wrapper">
+          {renderView()}
+        </div>
+      </main>
+      <BottomNavBar currentView={currentView} setView={setCurrentView} />
+    </div>
+  );
+};
+
+export default App;
