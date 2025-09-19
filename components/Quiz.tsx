@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { QUIZ_QUESTIONS } from '../constants.tsx';
 import { generateQuizQuestions, generateQuizAnalysis } from '../services/geminiService.ts';
@@ -9,10 +10,9 @@ import { useTranslation } from '../i18n/useTranslation.ts';
 
 interface QuizProps {
   unlockBadge: (slug: BadgeSlug) => void;
-  addPoints: (points: number) => void;
 }
 
-const Quiz: React.FC<QuizProps> = ({ unlockBadge, addPoints }) => {
+const Quiz: React.FC<QuizProps> = ({ unlockBadge }) => {
   const { t, language } = useTranslation();
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,7 +90,6 @@ const Quiz: React.FC<QuizProps> = ({ unlockBadge, addPoints }) => {
     setShowFeedback(true);
     if (answer === currentQuestion.correctAnswer) {
       setScore(s => s + 1);
-      addPoints(20);
     }
   };
 

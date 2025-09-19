@@ -86,9 +86,9 @@ const App: React.FC = () => {
       case View.LOCATOR:
         return <FacilityLocator />;
       case View.QUIZ:
-        return <Quiz unlockBadge={unlockBadge} addPoints={addPoints} />;
+        return <Quiz unlockBadge={unlockBadge} />;
       case View.REPORT:
-        return <ReportWaste incrementReportCount={incrementReportCount} addReportToHistory={addReportToHistory} />;
+        return <ReportWaste incrementReportCount={incrementReportCount} addReportToHistory={addReportToHistory} addPoints={addPoints} />;
       case View.CHATBOT:
         return <Chatbot unlockBadge={unlockBadge} />;
       case View.PROFILE:

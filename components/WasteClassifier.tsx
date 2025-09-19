@@ -6,11 +6,29 @@ import Spinner from './common/Spinner.tsx';
 import { CameraIcon, VideoIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 import ResultCard from './common/ResultCard.tsx';
+import CameraView from './common/CameraView.tsx';
 
 interface WasteClassifierProps {
   unlockBadge: (slug: BadgeSlug) => void;
   addPoints: (points: number) => void;
   addClassificationToHistory: (result: WasteClassificationResult) => void;
+}
+
+// Helper function to convert a data URL to a File object
+const dataURLtoFile = (dataurl: string, filename: string): File | null => {
+    const arr = dataurl.split(',');
+    const match = arr[0].match(/:(.*?);/);
+    if (!match) return null;
+
+    const mime = match[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
 }
 
 const WasteClassifier: React.FC<WasteClassifierProps> = ({ unlockBadge, addPoints, addClassificationToHistory }) => {
@@ -26,6 +44,7 @@ const WasteClassifier: React.FC<WasteClassifierProps> = ({ unlockBadge, addPoint
   const [result, setResult] = useState<WasteClassificationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scanCount, setScanCount] = useState<number>(0);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -38,16 +57,20 @@ const WasteClassifier: React.FC<WasteClassifierProps> = ({ unlockBadge, addPoint
       unlockBadge('novice-recycler');
     }
   }, [scanCount, unlockBadge]);
-
-  const resetState = () => {
+  
+  const resetImageState = () => {
     setImageSrc(null);
     setImageFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const resetState = () => {
+    resetImageState();
     setVideoSrc(null);
     setVideoFile(null);
     setResult(null);
     setError(null);
     // Reset file input value to allow selecting the same file again
-    if(fileInputRef.current) fileInputRef.current.value = "";
     if(videoInputRef.current) videoInputRef.current.value = "";
   }
 
@@ -82,6 +105,17 @@ const WasteClassifier: React.FC<WasteClassifierProps> = ({ unlockBadge, addPoint
       };
       reader.readAsDataURL(file);
     }
+  };
+  
+  const handlePhotoCapture = (dataUrl: string) => {
+    setImageSrc(dataUrl);
+    const file = dataURLtoFile(dataUrl, `capture-${Date.now()}.jpg`);
+    if (file) {
+      setImageFile(file);
+    }
+    setResult(null);
+    setError(null);
+    setIsCameraOpen(false);
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -140,6 +174,7 @@ const WasteClassifier: React.FC<WasteClassifierProps> = ({ unlockBadge, addPoint
 
   return (
     <div className="max-w-2xl mx-auto">
+      {isCameraOpen && <CameraView onCapture={handlePhotoCapture} onClose={() => setIsCameraOpen(false)} />}
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">{t('classifierTitle')}</h2>
       <p className="text-center text-gray-500 mb-6">{t('classifierDescription')}</p>
       
@@ -164,29 +199,41 @@ const WasteClassifier: React.FC<WasteClassifierProps> = ({ unlockBadge, addPoint
         <Card className="p-6">
           {mode === 'image' && (
               <div className="flex flex-col items-center">
-              <div 
-                onClick={triggerFileSelect} 
-                className="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500 hover:bg-gray-50 transition-colors bg-cover bg-center"
-                style={{ backgroundImage: imageSrc ? `url(${imageSrc})` : 'none' }}
-              >
-                {!imageSrc && (
-                  <div className="text-center text-gray-500 p-4">
-                    <CameraIcon className="w-12 h-12 mx-auto mb-2 text-green-500" />
-                    <p className="font-semibold">{t('uploadImage')}</p>
-                    <p className="text-sm">Tap here to select a photo</p>
-                  </div>
+                {imageSrc ? (
+                    <div className="relative w-full">
+                        <img src={imageSrc} alt="Waste to classify" className="w-full h-auto max-h-72 object-contain rounded-md bg-gray-100 p-1 border" />
+                        <button type="button" onClick={resetImageState} className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 leading-none text-xl font-bold">&times;</button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 gap-4 w-full">
+                        <button
+                            type="button"
+                            onClick={triggerFileSelect}
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-300 border-dashed rounded-md hover:border-green-500 hover:bg-gray-50 transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-gray-400 mb-2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <span className="text-sm font-semibold text-gray-600">{t('uploadPhoto')}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsCameraOpen(true)}
+                            className="flex flex-col items-center justify-center p-6 border-2 border-gray-300 border-dashed rounded-md hover:border-green-500 hover:bg-gray-50 transition-colors"
+                        >
+                            <CameraIcon className="w-8 h-8 text-gray-400 mb-2" />
+                            <span className="text-sm font-semibold text-gray-600">{t('takePhoto')}</span>
+                        </button>
+                    </div>
                 )}
+                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="hidden" />
+      
+                <button
+                  onClick={handleImageClassify}
+                  disabled={!imageSrc || loading}
+                  className="mt-6 w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? t('analyzing') : t('classifyImage')}
+                </button>
               </div>
-              <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="hidden" />
-    
-              <button
-                onClick={handleImageClassify}
-                disabled={!imageSrc || loading}
-                className="mt-6 w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? t('analyzing') : t('classifyImage')}
-              </button>
-            </div>
           )}
           {mode === 'video' && (
               <div className="flex flex-col items-center">
