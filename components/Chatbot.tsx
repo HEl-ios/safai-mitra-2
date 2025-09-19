@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createChat } from '../services/geminiService.ts';
 import type { Chat } from "@google/genai";
@@ -6,7 +5,8 @@ import { BadgeSlug } from '../types.ts';
 import Card from './common/Card.tsx';
 import Spinner from './common/Spinner.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
-import { UserIcon, MessageSquareIcon as BotIcon } from './common/Icons.tsx';
+import { UserIcon, MessageSquareIcon as BotIcon, MicrophoneIcon } from './common/Icons.tsx';
+import useVoiceRecognition from '../hooks/useVoiceRecognition.ts';
 
 interface ChatbotProps {
     unlockBadge: (slug: BadgeSlug) => void;
@@ -55,11 +55,18 @@ const Chatbot: React.FC<ChatbotProps> = ({ unlockBadge }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [hasChatted, setHasChatted] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const { isListening, transcript, startListening, stopListening, isSupported, error: voiceError } = useVoiceRecognition(language);
 
     useEffect(() => {
         setChat(createChat(language));
         setMessages([{ sender: 'bot', text: t('chatbotWelcome') }]);
     }, [language, t]);
+
+    useEffect(() => {
+        if (transcript) {
+            setInput(transcript);
+        }
+    }, [transcript]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -140,19 +147,34 @@ const Chatbot: React.FC<ChatbotProps> = ({ unlockBadge }) => {
                     )}
                     <div ref={messagesEndRef} />
                 </div>
-                <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 flex items-center gap-2">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder={t('typeMessage')}
-                        className="flex-1 block w-full rounded-full border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm px-4"
-                        disabled={isLoading}
-                    />
-                    <button type="submit" disabled={isLoading || !input.trim()} className="bg-green-600 text-white font-bold p-3 rounded-full hover:bg-green-700 transition-colors disabled:bg-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                    </button>
-                </form>
+                <div className="p-4 border-t border-gray-200">
+                    <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder={isListening ? t('voiceInputListening') : t('typeMessage')}
+                                className="block w-full rounded-full border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm px-4 py-2.5 pr-12"
+                                disabled={isLoading}
+                            />
+                            {isSupported && (
+                                <button 
+                                    type="button" 
+                                    onClick={isListening ? stopListening : startListening}
+                                    className={`absolute inset-y-0 right-0 flex items-center pr-4 transition-colors ${isListening ? 'text-green-500' : 'text-gray-500 hover:text-green-600'}`}
+                                    aria-label={isListening ? 'Stop recording' : 'Start recording'}
+                                >
+                                    <MicrophoneIcon className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
+                                </button>
+                            )}
+                        </div>
+                        <button type="submit" disabled={isLoading || !input.trim()} className="bg-green-600 text-white font-bold p-3 rounded-full hover:bg-green-700 transition-colors disabled:bg-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                        </button>
+                    </form>
+                    {voiceError && <p className="text-xs text-red-500 text-center mt-2">{voiceError}</p>}
+                </div>
             </Card>
         </div>
     );

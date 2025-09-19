@@ -102,6 +102,9 @@ export const en = {
   submitAnother: 'Submit Another Report',
   submittingReport: 'Submitting...',
   locationCaptureError: 'Could not get location. Report submitted without location data.',
+  authenticating: 'Authenticating...',
+  duplicateReportError: 'This image has already been reported the maximum number of times.',
+  authenticationFailed: 'Authentication Failed',
   // Map
   mapTitle: 'Community Reports Map',
   noLocatedReports: 'No reports with location data have been submitted yet.',
@@ -139,4 +142,7 @@ export const en = {
   profileNotificationsCommunityAlerts: 'Community Alerts',
   profileNotificationsCommunityAlertsDesc: 'Get notified about local cleanup events and important community reports.',
   profileNotificationsDisabled: 'Enable notifications via the dashboard to manage preferences.',
+  // Voice Input
+  voiceInputListening: 'Listening...',
+  voiceInputUnsupported: 'Voice input is not supported by your browser.',
 };

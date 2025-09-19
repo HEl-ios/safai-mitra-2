@@ -19,6 +19,12 @@ export interface WasteClassificationResult {
   recyclable: boolean;
 }
 
+export interface WasteMediaAuthenticationResult {
+  isValidWasteReport: boolean;
+  isRecent: boolean;
+  reason: string;
+}
+
 export interface QuizQuestion {
   question: string;
   options: string[];

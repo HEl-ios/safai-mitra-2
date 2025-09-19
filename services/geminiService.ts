@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, GenerateContentResponse, Chat } from "@google/genai";
-import { WasteClassificationResult, QuizQuestion, Facility, QuizAnalysis } from '../types.ts';
+import { WasteClassificationResult, QuizQuestion, Facility, QuizAnalysis, WasteMediaAuthenticationResult } from '../types.ts';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -100,6 +100,62 @@ export const classifyWasteVideo = async (base64Video: string, mimeType: string, 
   } catch (error) {
     console.error("Error classifying waste video:", error);
     throw new Error("Failed to classify the video. The AI model might be unable to identify the item.");
+  }
+};
+
+const mediaAuthenticationSchema = {
+  type: Type.OBJECT,
+  properties: {
+    isValidWasteReport: {
+      type: Type.BOOLEAN,
+      description: "True if the image/video clearly shows improperly disposed waste (e.g., litter, overflowing bin). False if it's just a regular scene, a person, or irrelevant content."
+    },
+    isRecent: {
+      type: Type.BOOLEAN,
+      description: "True if the content appears to have been captured within the last 3 days. Look for clues like freshness of organic waste, lack of significant weathering on items, or other environmental cues. False if it looks old or staged."
+    },
+    reason: {
+      type: Type.STRING,
+      description: "A brief, user-facing explanation for the decision, especially if validation fails. For example, 'The image does not appear to contain waste,' or 'The scene looks like it may be older than 3 days.'"
+    }
+  },
+  required: ["isValidWasteReport", "isRecent", "reason"]
+};
+
+export const authenticateWasteMedia = async (base64Media: string, mimeType: string, language: 'en' | 'hi'): Promise<WasteMediaAuthenticationResult> => {
+  try {
+    const langInstruction = language === 'hi' ? "Provide your response in Hindi." : "Provide your response in English.";
+    const prompt = `You are a waste reporting authenticator. Analyze the provided media (image or video) to verify its suitability for a community waste report.
+    1. Confirm that the media genuinely depicts improperly managed waste (e.g., litter on the ground, an overflowing public dustbin, illegal dumping).
+    2. Critically assess if the scene looks recent, within approximately the last 3 days. Scrutinize for signs of age, such as advanced decay of organic matter, significant dust accumulation, plant overgrowth, or weathering that suggests a longer period.
+    3. Use the provided JSON schema to structure your response. Be strict in your assessment to prevent spam or old reports.
+    ${langInstruction}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64Media,
+              mimeType: mimeType,
+            },
+          },
+          { text: prompt },
+        ],
+      },
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: mediaAuthenticationSchema,
+        temperature: 0.1,
+      },
+    });
+
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as WasteMediaAuthenticationResult;
+  } catch (error) {
+    console.error("Error authenticating waste media:", error);
+    throw new Error("Failed to authenticate the media. The AI model could not process the request.");
   }
 };
 

@@ -102,6 +102,9 @@ export const hi = {
   submitAnother: 'एक और रिपोर्ट सबमिट करें',
   submittingReport: 'सबमिट हो रहा है...',
   locationCaptureError: 'स्थान प्राप्त नहीं किया जा सका। रिपोर्ट बिना स्थान डेटा के सबमिट की गई।',
+  authenticating: 'प्रमाणित हो रहा है...',
+  duplicateReportError: 'इस छवि की अधिकतम बार रिपोर्ट की जा चुकी है।',
+  authenticationFailed: 'प्रमाणीकरण विफल',
   // Map
   mapTitle: 'सामुदायिक रिपोर्ट मानचित्र',
   noLocatedReports: 'अभी तक स्थान डेटा के साथ कोई रिपोर्ट सबमिट नहीं की गई है।',
@@ -139,4 +142,7 @@ export const hi = {
   profileNotificationsCommunityAlerts: 'सामुदायिक अलर्ट',
   profileNotificationsCommunityAlertsDesc: 'स्थानीय सफाई कार्यक्रमों और महत्वपूर्ण सामुदायिक रिपोर्टों के बारे में सूचित हों।',
   profileNotificationsDisabled: 'प्राथमिकताओं को प्रबंधित करने के लिए डैशबोर्ड के माध्यम से सूचनाएं सक्षम करें।',
+  // Voice Input
+  voiceInputListening: 'सुन रहा है...',
+  voiceInputUnsupported: 'आपके ब्राउज़र द्वारा ध्वनि इनपुट समर्थित नहीं है।',
 };

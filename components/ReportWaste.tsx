@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Card from './common/Card.tsx';
-import { CameraIcon } from './common/Icons.tsx';
+import { CameraIcon, MicrophoneIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 import { ReportHistoryItem } from '../types.ts';
+import { authenticateWasteMedia } from '../services/geminiService.ts';
+import useVoiceRecognition from '../hooks/useVoiceRecognition.ts';
 
 const CameraView: React.FC<{
     onCapture: (image: string) => void;
@@ -74,20 +76,41 @@ const CameraView: React.FC<{
     );
 };
 
-// Fix: Defined props interface for the ReportWaste component.
+// Simple string hash function for duplicate detection
+const simpleHash = (str: string): string => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash.toString();
+};
+
+
 interface ReportWasteProps {
     incrementReportCount: () => void;
     addReportToHistory: (reportData: ReportHistoryItem['data']) => void;
 }
 
 const ReportWaste: React.FC<ReportWasteProps> = ({ incrementReportCount, addReportToHistory }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [image, setImage] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isListening, transcript, startListening, stopListening, isSupported, error: voiceError } = useVoiceRecognition(language);
+
+  useEffect(() => {
+      if (transcript) {
+          setDescription(prev => prev ? `${prev} ${transcript}` : transcript);
+      }
+  }, [transcript]);
+
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -95,47 +118,83 @@ const ReportWaste: React.FC<ReportWasteProps> = ({ incrementReportCount, addRepo
       const reader = new FileReader();
       reader.onloadend = () => {
         setImage(reader.result as string);
+        setAuthError(null);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!image || !description) return;
 
     setIsSubmitting(true);
-    
-    new Promise<GeolocationPosition>((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation not supported"));
+    setIsAuthenticating(true);
+    setAuthError(null);
+
+    // 1. Duplicate Check
+    const imageHash = simpleHash(image);
+    const hashes = JSON.parse(localStorage.getItem('wasteReportHashes') || '{}');
+    if (hashes[imageHash] && hashes[imageHash] >= 2) {
+        setAuthError(t('duplicateReportError'));
+        setIsSubmitting(false);
+        setIsAuthenticating(false);
         return;
-      }
-      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-    })
-    .then(position => {
-      const location = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-      };
-      addReportToHistory({ image, description, location });
-    })
-    .catch(err => {
-      console.warn("Could not get location:", err.message);
-      // Submit without location as a fallback
-      addReportToHistory({ image, description });
-    })
-    .finally(() => {
-      incrementReportCount();
-      setSubmitted(true);
-      setIsSubmitting(false);
-    });
+    }
+
+    // 2. AI Authentication
+    try {
+        const base64Image = image.split(',')[1];
+        const mimeType = image.match(/data:(.*);base64,/)?.[1] || 'image/jpeg';
+        
+        const authResult = await authenticateWasteMedia(base64Image, mimeType, language);
+        
+        if (!authResult.isValidWasteReport || !authResult.isRecent) {
+            setAuthError(authResult.reason);
+            setIsSubmitting(false);
+            setIsAuthenticating(false);
+            return;
+        }
+
+        setIsAuthenticating(false);
+        
+        // 3. Proceed with submission
+        await new Promise<void>((resolvePromise) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+              addReportToHistory({ image, description, location });
+              resolvePromise();
+            },
+            (err) => {
+              console.warn("Could not get location:", err.message);
+              addReportToHistory({ image, description });
+              resolvePromise();
+            },
+            { timeout: 10000 }
+          );
+        });
+
+        // Update hash count on successful submission
+        hashes[imageHash] = (hashes[imageHash] || 0) + 1;
+        localStorage.setItem('wasteReportHashes', JSON.stringify(hashes));
+        
+        incrementReportCount();
+        setSubmitted(true);
+
+    } catch (err) {
+        setAuthError((err as Error).message);
+    } finally {
+        setIsSubmitting(false);
+        setIsAuthenticating(false);
+    }
   };
   
   const resetForm = () => {
       setImage(null);
       setDescription('');
       setSubmitted(false);
+      setAuthError(null);
   }
 
   if (submitted) {
@@ -193,24 +252,41 @@ const ReportWaste: React.FC<ReportWasteProps> = ({ incrementReportCount, addRepo
               <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
             </div>
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('description')}</label>
+              <div className="flex justify-between items-center">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('description')}</label>
+                 {isSupported && (
+                    <button type="button" onClick={isListening ? stopListening : startListening} className={`p-1 rounded-full transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-gray-500 hover:bg-gray-200'}`}>
+                        <MicrophoneIcon className="w-5 h-5"/>
+                    </button>
+                 )}
+              </div>
               <textarea
                 id="description"
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm px-3 py-2 text-base text-gray-900 placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-200 focus:outline-none transition-all duration-200"
-                placeholder={t('descriptionPlaceholder')}
+                placeholder={isListening ? t('voiceInputListening') : t('descriptionPlaceholder')}
               ></textarea>
+              {voiceError && <p className="text-xs text-red-500 mt-1">{voiceError}</p>}
+               {!isSupported && <p className="text-xs text-gray-500 mt-1">{t('voiceInputUnsupported')}</p>}
             </div>
           </div>
+
+          {authError && (
+              <div className="mt-4 text-center text-red-600 bg-red-100 p-3 rounded-lg" role="alert">
+                  <p className="font-semibold">{t('authenticationFailed')}</p>
+                  <p>{authError}</p>
+              </div>
+          )}
+
           <div className="mt-6">
             <button
               type="submit"
               disabled={!image || !description || isSubmitting}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-wait"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-wait"
             >
-              {isSubmitting ? t('submittingReport') : t('submitReport')}
+              {isAuthenticating ? t('authenticating') : (isSubmitting ? t('submittingReport') : t('submitReport'))}
             </button>
             <p className="text-xs text-center text-gray-500 mt-2">{t('geotagged')}</p>
           </div>
