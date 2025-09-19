@@ -1,3 +1,4 @@
+
 export const en = {
   // Header
   appName: 'Safai Mitra',
@@ -7,8 +8,9 @@ export const en = {
   navLocate: 'Locate',
   navQuiz: 'Quiz',
   navReport: 'Report',
+  navProfile: 'Profile',
   // Dashboard
-  dashboardTitle: 'Welcome, Eco-Warrior!',
+  dashboardTitle: 'Welcome, {name}!',
   dashboardSubtitle: "Your actions make a difference. Let's make our planet cleaner, one step at a time.",
   featureClassifierTitle: 'Waste Classifier',
   featureClassifierDescription: 'Scan an item to know its waste type.',
@@ -122,4 +124,12 @@ export const en = {
   sendTestNotification: 'Send Test Notification',
   testNotificationTitle: 'Hello from Safai Mitra!',
   testNotificationBody: 'This is a test notification to confirm everything is working correctly.',
+  // User Profile
+  profileTitle: 'User Profile',
+  profileDescription: 'Manage your account details and preferences.',
+  profileNameLabel: 'Display Name',
+  profileNamePlaceholder: 'Enter your name',
+  profileLanguageLabel: 'Preferred Language',
+  profileSaveButton: 'Save Profile',
+  profileSavedMessage: 'Profile saved successfully!',
 };

@@ -11,6 +11,7 @@ import NotificationManager from './NotificationManager.tsx';
 interface DashboardProps {
   setView: (view: View) => void;
   userPoints: number;
+  userName: string;
   unlockedBadges: Badge[];
   history: HistoryItem[];
 }
@@ -44,7 +45,7 @@ const BadgeDisplay: React.FC<{ badge: Badge }> = ({ badge }) => (
 );
 
 
-const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history, userName }) => {
   const { t } = useTranslation();
 
   const features = [
@@ -84,8 +85,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history 
 
   return (
     <div className="space-y-8">
-      <div className="p-8 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-xl text-center">
-        <h2 className="text-4xl font-bold mb-2">{t('dashboardTitle')}</h2>
+      <div className="relative p-8 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-xl text-center">
+        <h2 className="text-4xl font-bold mb-2">{t('dashboardTitle', { name: userName })}</h2>
         <p className="max-w-2xl mx-auto">{t('dashboardSubtitle')}</p>
       </div>
 

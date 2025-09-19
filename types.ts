@@ -8,6 +8,7 @@ export enum View {
   QUIZ = 'QUIZ',
   REPORT = 'REPORT',
   CHATBOT = 'CHATBOT',
+  PROFILE = 'PROFILE',
 }
 
 export interface WasteClassificationResult {

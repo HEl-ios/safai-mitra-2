@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { View } from '../types.ts';
-import { HomeIcon, ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon } from './common/Icons.tsx';
+import { HomeIcon, ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, UserIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 
 interface BottomNavBarProps {
@@ -35,15 +34,15 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, setView }) => 
   
   const navItems = [
     { view: View.DASHBOARD, label: t('navHome'), icon: <HomeIcon /> },
-    // Fix: Corrected typo from 'View-CLASSIFIER' to 'View.CLASSIFIER' to fix multiple compilation errors.
     { view: View.CLASSIFIER, label: t('navClassify'), icon: <ScanLineIcon /> },
     { view: View.LOCATOR, label: t('navLocate'), icon: <MapPinIcon /> },
     { view: View.QUIZ, label: t('navQuiz'), icon: <BrainCircuitIcon /> },
     { view: View.REPORT, label: t('navReport'), icon: <AlertTriangleIcon /> },
+    { view: View.PROFILE, label: t('navProfile'), icon: <UserIcon /> },
   ];
 
   return (
-    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-sm z-20">
+    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-md z-20">
       <div className="flex justify-around items-center bg-white/70 backdrop-blur-lg shadow-2xl shadow-gray-400/30 rounded-full h-20 px-2">
         {navItems.map((item) => (
           <NavItem

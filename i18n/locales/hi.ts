@@ -1,3 +1,4 @@
+
 export const hi = {
   // Header
   appName: 'सफाई मित्र',
@@ -7,8 +8,9 @@ export const hi = {
   navLocate: 'खोजें',
   navQuiz: 'प्रश्नोत्तरी',
   navReport: 'रिपोर्ट',
+  navProfile: 'प्रोफ़ाइल',
   // Dashboard
-  dashboardTitle: 'आपका स्वागत है, पर्यावरण-योद्धा!',
+  dashboardTitle: 'आपका स्वागत है, {name}!',
   dashboardSubtitle: 'आपके कार्य से फर्क पड़ता है। आइए हम अपने ग्रह को एक समय में एक कदम साफ करें।',
   featureClassifierTitle: 'अपशिष्ट वर्गीकरण',
   featureClassifierDescription: 'किसी वस्तु का अपशिष्ट प्रकार जानने के लिए उसे स्कैन करें।',
@@ -122,4 +124,12 @@ export const hi = {
   sendTestNotification: 'परीक्षण सूचना भेजें',
   testNotificationTitle: 'सफाई मित्र की ओर से नमस्ते!',
   testNotificationBody: 'यह पुष्टि करने के लिए एक परीक्षण सूचना है कि सब कुछ सही ढंग से काम कर रहा है।',
+  // User Profile
+  profileTitle: 'उपयोगकर्ता प्रोफ़ाइल',
+  profileDescription: 'अपने खाते का विवरण और प्राथमिकताएं प्रबंधित करें।',
+  profileNameLabel: 'प्रदर्शित नाम',
+  profileNamePlaceholder: 'अपना नाम दर्ज करें',
+  profileLanguageLabel: 'पसंदीदा भाषा',
+  profileSaveButton: 'प्रोफ़ाइल सहेजें',
+  profileSavedMessage: 'प्रोफ़ाइल सफलतापूर्वक सहेजी गई!',
 };

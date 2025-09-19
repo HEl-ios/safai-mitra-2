@@ -9,6 +9,7 @@ import FacilityLocator from './components/FacilityLocator.tsx';
 import Quiz from './components/Quiz.tsx';
 import ReportWaste from './components/ReportWaste.tsx';
 import Chatbot from './components/Chatbot.tsx';
+import UserProfile from './components/UserProfile.tsx';
 import BottomNavBar from './components/BottomNavBar.tsx';
 
 const App: React.FC = () => {
@@ -17,6 +18,13 @@ const App: React.FC = () => {
   const [unlockedBadges, setUnlockedBadges] = useState<Set<BadgeSlug>>(new Set());
   const [reportCount, setReportCount] = useState<number>(0);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [userName, setUserName] = useState<string>(() => localStorage.getItem('userName') || 'Eco-Warrior');
+
+  const handleSetUserName = (name: string) => {
+      const newName = name.trim() === '' ? 'Eco-Warrior' : name;
+      setUserName(newName);
+      localStorage.setItem('userName', newName);
+  }
 
   const addPoints = useCallback((points: number) => {
     setUserPoints(prev => prev + points);
@@ -83,12 +91,15 @@ const App: React.FC = () => {
         return <ReportWaste incrementReportCount={incrementReportCount} addReportToHistory={addReportToHistory} />;
       case View.CHATBOT:
         return <Chatbot unlockBadge={unlockBadge} />;
+      case View.PROFILE:
+        return <UserProfile userName={userName} setUserName={handleSetUserName} />;
       case View.DASHBOARD:
       default:
         return (
           <Dashboard
             setView={setCurrentView}
             userPoints={userPoints}
+            userName={userName}
             unlockedBadges={Array.from(unlockedBadges).map(slug => BADGE_DEFINITIONS.find(b => b.slug === slug)).filter(Boolean) as Badge[]}
             history={history}
           />
