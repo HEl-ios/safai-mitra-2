@@ -132,4 +132,11 @@ export const en = {
   profileLanguageLabel: 'Preferred Language',
   profileSaveButton: 'Save Profile',
   profileSavedMessage: 'Profile saved successfully!',
+  profileNotificationsTitle: 'Notification Preferences',
+  profileNotificationsDescription: 'Choose what you want to be notified about. You must enable notifications in your browser first.',
+  profileNotificationsWeeklyTips: 'Weekly Tips',
+  profileNotificationsWeeklyTipsDesc: 'Receive a weekly notification with a useful waste management tip.',
+  profileNotificationsCommunityAlerts: 'Community Alerts',
+  profileNotificationsCommunityAlertsDesc: 'Get notified about local cleanup events and important community reports.',
+  profileNotificationsDisabled: 'Enable notifications via the dashboard to manage preferences.',
 };

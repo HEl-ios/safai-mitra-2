@@ -132,4 +132,11 @@ export const hi = {
   profileLanguageLabel: 'पसंदीदा भाषा',
   profileSaveButton: 'प्रोफ़ाइल सहेजें',
   profileSavedMessage: 'प्रोफ़ाइल सफलतापूर्वक सहेजी गई!',
+  profileNotificationsTitle: 'अधिसूचना प्राथमिकताएं',
+  profileNotificationsDescription: 'चुनें कि आप किस बारे में सूचित होना चाहते हैं। आपको पहले अपने ब्राउज़र में सूचनाएं सक्षम करनी होंगी।',
+  profileNotificationsWeeklyTips: 'साप्ताहिक सुझाव',
+  profileNotificationsWeeklyTipsDesc: 'एक उपयोगी अपशिष्ट प्रबंधन टिप के साथ साप्ताहिक सूचना प्राप्त करें।',
+  profileNotificationsCommunityAlerts: 'सामुदायिक अलर्ट',
+  profileNotificationsCommunityAlertsDesc: 'स्थानीय सफाई कार्यक्रमों और महत्वपूर्ण सामुदायिक रिपोर्टों के बारे में सूचित हों।',
+  profileNotificationsDisabled: 'प्राथमिकताओं को प्रबंधित करने के लिए डैशबोर्ड के माध्यम से सूचनाएं सक्षम करें।',
 };
