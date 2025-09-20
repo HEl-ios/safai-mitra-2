@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Badge, HistoryItem, ReportHistoryItem } from '../types.ts';
 import Card from './common/Card.tsx';
-import { ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, MessageSquareIcon } from './common/Icons.tsx';
+import { ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, MessageSquareIcon, BarChartIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 import HistoryList from './HistoryList.tsx';
 import ReportMap from './ReportMap.tsx';
@@ -79,6 +79,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history,
       description: t('featureChatbotDescription'),
       view: View.CHATBOT,
     },
+     {
+      icon: <BarChartIcon />,
+      title: t('featureTransparencyTitle'),
+      description: t('featureTransparencyDescription'),
+      view: View.TRANSPARENCY_DASHBOARD,
+    },
   ];
   
   const reportHistory = history.filter(item => item.type === 'report') as ReportHistoryItem[];
@@ -90,7 +96,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history,
         <p className="max-w-2xl mx-auto">{t('dashboardSubtitle')}</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {features.map((feature) => (
           <FeatureCard
             key={feature.title}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HistoryItem } from '../types.ts';
+import { HistoryItem, ReportStatus } from '../types.ts';
 import Card from './common/Card.tsx';
 import ResultCard from './common/ResultCard.tsx';
 import { ScanLineIcon, AlertTriangleIcon, ClockIcon, ChevronDownIcon } from './common/Icons.tsx';
@@ -8,6 +8,29 @@ import { useTranslation } from '../i18n/useTranslation.ts';
 interface HistoryListProps {
     history: HistoryItem[];
 }
+
+const getStatusClasses = (status: ReportStatus): string => {
+    switch (status) {
+      case 'Pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'In Progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'Resolved':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+};
+
+const StatusBadge: React.FC<{ status: ReportStatus }> = ({ status }) => {
+    const { t } = useTranslation();
+    const key = `reportStatus${status.replace(' ', '')}` as any;
+    return (
+        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClasses(status)}`}>
+            {t(key)}
+        </span>
+    );
+};
 
 const HistoryList: React.FC<HistoryListProps> = ({ history }) => {
     const { t } = useTranslation();
@@ -50,14 +73,17 @@ const HistoryList: React.FC<HistoryListProps> = ({ history }) => {
                                 <div className="p-2 bg-gray-100 rounded-full">{itemIcon}</div>
                                 <div>
                                     <p className="font-semibold text-gray-800">{itemTitle}</p>
-                                    <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                                        <ClockIcon className="w-3 h-3"/>
-                                        <span>
-                                            {item.timestamp.toLocaleString(undefined, {
-                                                dateStyle: 'medium',
-                                                timeStyle: 'short',
-                                            })}
-                                        </span>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                        <div className="flex items-center gap-1">
+                                            <ClockIcon className="w-3 h-3"/>
+                                            <span>
+                                                {item.timestamp.toLocaleString(undefined, {
+                                                    dateStyle: 'medium',
+                                                    timeStyle: 'short',
+                                                })}
+                                            </span>
+                                        </div>
+                                        {item.type === 'report' && <StatusBadge status={item.data.status} />}
                                     </div>
                                 </div>
                             </div>

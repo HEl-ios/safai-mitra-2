@@ -9,6 +9,8 @@ export enum View {
   REPORT = 'REPORT',
   CHATBOT = 'CHATBOT',
   PROFILE = 'PROFILE',
+  ADMIN_DASHBOARD = 'ADMIN_DASHBOARD',
+  TRANSPARENCY_DASHBOARD = 'TRANSPARENCY_DASHBOARD',
 }
 
 export interface WasteClassificationResult {
@@ -23,6 +25,14 @@ export interface WasteMediaAuthenticationResult {
   isValidWasteReport: boolean;
   isRecent: boolean;
   reason: string;
+}
+
+// Added: New type for advanced AI analysis of reported waste.
+export interface ReportAnalysis {
+  estimatedVolume: 'Small' | 'Medium' | 'Large' | 'Unknown';
+  wasteTypeCategory: 'Household' | 'Construction Debris' | 'E-waste' | 'Mixed Commercial' | 'Organic' | 'Unknown';
+  isBulkGenerator: boolean;
+  analysisSummary: string;
 }
 
 export interface QuizQuestion {
@@ -55,14 +65,23 @@ export interface ClassificationHistoryItem {
   data: WasteClassificationResult;
 }
 
+export type ReportStatus = 'Pending' | 'In Progress' | 'Resolved';
+
+// Added: New type for penalty status.
+export type PenaltyStatus = 'None' | 'Drafted' | 'Issued';
+
 export interface ReportHistoryItem {
   id: string;
   type: 'report';
   timestamp: Date;
-  data: { 
-    image: string; 
-    description:string; 
-    location?: { latitude: number; longitude: number; };
+  data: {
+    image: string;
+    description: string;
+    location?: { latitude: number; longitude: number };
+    status: ReportStatus;
+    // Added: Optional fields for advanced AI analysis and penalty tracking.
+    analysis?: ReportAnalysis;
+    penaltyStatus: PenaltyStatus;
   };
 }
 

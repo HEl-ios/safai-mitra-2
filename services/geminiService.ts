@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, GenerateContentResponse, Chat } from "@google/genai";
-import { WasteClassificationResult, QuizQuestion, Facility, QuizAnalysis, WasteMediaAuthenticationResult } from '../types.ts';
+import { WasteClassificationResult, QuizQuestion, Facility, QuizAnalysis, WasteMediaAuthenticationResult, ReportAnalysis } from '../types.ts';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -156,6 +156,64 @@ export const authenticateWasteMedia = async (base64Media: string, mimeType: stri
   } catch (error) {
     console.error("Error authenticating waste media:", error);
     throw new Error("Failed to authenticate the media. The AI model could not process the request.");
+  }
+};
+
+const reportAnalysisSchema = {
+  type: Type.OBJECT,
+  properties: {
+    estimatedVolume: {
+      type: Type.STRING,
+      description: "Estimate the volume of the waste pile.",
+      enum: ['Small', 'Medium', 'Large', 'Unknown'],
+    },
+    wasteTypeCategory: {
+      type: Type.STRING,
+      description: "Categorize the primary type of waste visible.",
+      enum: ['Household', 'Construction Debris', 'E-waste', 'Mixed Commercial', 'Organic', 'Unknown'],
+    },
+    isBulkGenerator: {
+      type: Type.BOOLEAN,
+      description: "Based on the volume and type, determine if this is likely from a bulk waste generator (e.g., a business, construction site) rather than an individual. Be conservative; only flag if evidence is strong."
+    },
+    analysisSummary: {
+      type: Type.STRING,
+      description: "Provide a brief, one-sentence summary for an administrator. Example: 'Medium-sized pile of mixed commercial waste located on a street corner.'"
+    }
+  },
+  required: ["estimatedVolume", "wasteTypeCategory", "isBulkGenerator", "analysisSummary"]
+};
+
+export const analyzeReportedWaste = async (base64Image: string, mimeType: string, language: 'en' | 'hi'): Promise<ReportAnalysis> => {
+  try {
+    const langInstruction = language === 'hi' ? "Provide your response in Hindi." : "Provide your response in English.";
+    const prompt = `As a waste management inspector, analyze the provided image. Your task is to provide a structured analysis for a municipal authority.
+    1.  **Estimate Volume:** Assess the overall size of the waste pile (Small, Medium, Large). 'Small' is a few items, 'Medium' is a full garbage bag's worth, 'Large' is significantly more.
+    2.  **Categorize Waste:** Identify the dominant type of waste. 'Household' for typical residential trash, 'Construction Debris' for materials like concrete or wood, 'Mixed Commercial' for business-related waste.
+    3.  **Identify Bulk Generator:** Determine if the waste likely originated from a bulk generator. Look for large quantities of uniform waste (e.g., many identical boxes from a shop) or specific types like construction materials that suggest a source other than an individual household.
+    4.  **Summarize:** Write a concise, one-sentence summary for the report.
+    Use the provided JSON schema for your response. ${langInstruction}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: {
+        parts: [
+          { inlineData: { data: base64Image, mimeType: mimeType } },
+          { text: prompt },
+        ],
+      },
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: reportAnalysisSchema,
+        temperature: 0.3,
+      },
+    });
+
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as ReportAnalysis;
+  } catch (error) {
+    console.error("Error analyzing reported waste:", error);
+    throw new Error("Failed to perform AI analysis on the report image.");
   }
 };
 

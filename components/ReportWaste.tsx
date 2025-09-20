@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import Card from './common/Card.tsx';
 import { CameraIcon, MicrophoneIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
-import { ReportHistoryItem } from '../types.ts';
-import { authenticateWasteMedia } from '../services/geminiService.ts';
+import { ReportHistoryItem, ReportAnalysis } from '../types.ts';
+import { authenticateWasteMedia, analyzeReportedWaste } from '../services/geminiService.ts';
 import useVoiceRecognition from '../hooks/useVoiceRecognition.ts';
 import CameraView from './common/CameraView.tsx';
 
@@ -21,7 +21,7 @@ const simpleHash = (str: string): string => {
 
 interface ReportWasteProps {
     incrementReportCount: () => void;
-    addReportToHistory: (reportData: ReportHistoryItem['data']) => void;
+    addReportToHistory: (reportData: Omit<ReportHistoryItem['data'], 'status' | 'penaltyStatus'> & Partial<Pick<ReportHistoryItem['data'], 'analysis'>>) => void;
     addPoints: (points: number) => void;
 }
 
@@ -33,6 +33,7 @@ const ReportWaste: React.FC<ReportWasteProps> = ({ incrementReportCount, addRepo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isListening, transcript, startListening, stopListening, isSupported, error: voiceError } = useVoiceRecognition(language);
@@ -74,7 +75,7 @@ const ReportWaste: React.FC<ReportWasteProps> = ({ incrementReportCount, addRepo
         return;
     }
 
-    // 2. AI Authentication
+    // 2. AI Authentication & Analysis
     try {
         const base64Image = image.split(',')[1];
         const mimeType = image.match(/data:(.*);base64,/)?.[1] || 'image/jpeg';
@@ -89,18 +90,29 @@ const ReportWaste: React.FC<ReportWasteProps> = ({ incrementReportCount, addRepo
         }
 
         setIsAuthenticating(false);
+        setIsAnalyzing(true);
         
+        let analysisResult: ReportAnalysis | undefined = undefined;
+        try {
+          analysisResult = await analyzeReportedWaste(base64Image, mimeType, language);
+        } catch (analysisError) {
+            console.warn("AI analysis failed, proceeding without it.", analysisError);
+            // Proceed without analysis data if this step fails
+        }
+        
+        setIsAnalyzing(false);
+
         // 3. Proceed with submission
         await new Promise<void>((resolvePromise) => {
           navigator.geolocation.getCurrentPosition(
             (position) => {
               const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
-              addReportToHistory({ image, description, location });
+              addReportToHistory({ image, description, location, analysis: analysisResult });
               resolvePromise();
             },
             (err) => {
               console.warn("Could not get location:", err.message);
-              addReportToHistory({ image, description });
+              addReportToHistory({ image, description, analysis: analysisResult });
               resolvePromise();
             },
             { timeout: 10000 }
@@ -120,6 +132,7 @@ const ReportWaste: React.FC<ReportWasteProps> = ({ incrementReportCount, addRepo
     } finally {
         setIsSubmitting(false);
         setIsAuthenticating(false);
+        setIsAnalyzing(false);
     }
   };
   
@@ -128,6 +141,13 @@ const ReportWaste: React.FC<ReportWasteProps> = ({ incrementReportCount, addRepo
       setDescription('');
       setSubmitted(false);
       setAuthError(null);
+  }
+
+  const getButtonText = () => {
+    if (isAuthenticating) return t('authenticating');
+    if (isAnalyzing) return t('analyzingReport');
+    if (isSubmitting) return t('submittingReport');
+    return t('submitReport');
   }
 
   if (submitted) {
@@ -219,7 +239,7 @@ const ReportWaste: React.FC<ReportWasteProps> = ({ incrementReportCount, addRepo
               disabled={!image || !description || isSubmitting}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-wait"
             >
-              {isAuthenticating ? t('authenticating') : (isSubmitting ? t('submittingReport') : t('submitReport'))}
+              {getButtonText()}
             </button>
             <p className="text-xs text-center text-gray-500 mt-2">{t('geotagged')}</p>
           </div>

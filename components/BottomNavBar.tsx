@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from '../types.ts';
-import { HomeIcon, ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, UserIcon } from './common/Icons.tsx';
+import { HomeIcon, ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, UserIcon, ShieldIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 
 interface BottomNavBarProps {
@@ -35,10 +35,9 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, setView }) => 
   const navItems = [
     { view: View.DASHBOARD, label: t('navHome'), icon: <HomeIcon /> },
     { view: View.CLASSIFIER, label: t('navClassify'), icon: <ScanLineIcon /> },
-    { view: View.LOCATOR, label: t('navLocate'), icon: <MapPinIcon /> },
-    { view: View.QUIZ, label: t('navQuiz'), icon: <BrainCircuitIcon /> },
     { view: View.REPORT, label: t('navReport'), icon: <AlertTriangleIcon /> },
     { view: View.PROFILE, label: t('navProfile'), icon: <UserIcon /> },
+    { view: View.ADMIN_DASHBOARD, label: t('navAdmin'), icon: <ShieldIcon /> },
   ];
 
   return (

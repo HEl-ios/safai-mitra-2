@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Badge, BadgeSlug, HistoryItem, WasteClassificationResult, ReportHistoryItem } from './types.ts';
+import { View, Badge, BadgeSlug, HistoryItem, WasteClassificationResult, ReportHistoryItem, ReportStatus, PenaltyStatus } from './types.ts';
 import { BADGE_DEFINITIONS } from './constants.tsx';
 import Header from './components/Header.tsx';
 import Dashboard from './components/Dashboard.tsx';
@@ -11,14 +11,41 @@ import ReportWaste from './components/ReportWaste.tsx';
 import Chatbot from './components/Chatbot.tsx';
 import UserProfile from './components/UserProfile.tsx';
 import BottomNavBar from './components/BottomNavBar.tsx';
+import AdminDashboard from './components/AdminDashboard.tsx';
+import TransparencyDashboard from './components/TransparencyDashboard.tsx';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
   const [userPoints, setUserPoints] = useState<number>(0);
   const [unlockedBadges, setUnlockedBadges] = useState<Set<BadgeSlug>>(new Set());
   const [reportCount, setReportCount] = useState<number>(0);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>(() => {
+    // Lazy initializer for history to load from localStorage
+    try {
+      const savedHistory = localStorage.getItem('appHistory');
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        // Revive Date objects from strings
+        return parsedHistory.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp),
+        }));
+      }
+    } catch (e) {
+      console.error("Could not parse history from localStorage", e);
+    }
+    return [];
+  });
   const [userName, setUserName] = useState<string>(() => localStorage.getItem('userName') || 'Eco-Warrior');
+
+  // Persist history to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('appHistory', JSON.stringify(history));
+    } catch (e) {
+      console.error("Could not save history to localStorage", e);
+    }
+  }, [history]);
 
   const handleSetUserName = (name: string) => {
       const newName = name.trim() === '' ? 'Eco-Warrior' : name;
@@ -38,7 +65,6 @@ const App: React.FC = () => {
         const badge = BADGE_DEFINITIONS.find(b => b.slug === slug);
         if (badge) {
           addPoints(badge.points);
-          // TODO: In a real app, show a toast notification here to celebrate!
         }
         console.log(`Badge unlocked: ${slug}`);
       }
@@ -60,15 +86,48 @@ const App: React.FC = () => {
     setHistory(prev => [newHistoryItem, ...prev]);
   }, []);
 
-  const addReportToHistory = useCallback((reportData: ReportHistoryItem['data']) => {
+  const addReportToHistory = useCallback((reportData: Omit<ReportHistoryItem['data'], 'status' | 'penaltyStatus'> & Partial<Pick<ReportHistoryItem['data'], 'analysis'>>) => {
     const newHistoryItem: HistoryItem = {
       id: `report-${Date.now()}`,
       type: 'report',
       timestamp: new Date(),
-      data: reportData,
+      data: { 
+        ...reportData, 
+        status: 'Pending',
+        penaltyStatus: reportData.analysis?.isBulkGenerator ? 'Drafted' : 'None',
+      },
     };
     setHistory(prev => [newHistoryItem, ...prev]);
   }, []);
+
+  const updateReportStatus = useCallback((reportId: string, newStatus: ReportStatus) => {
+    setHistory(prevHistory => {
+      return prevHistory.map(item => {
+        if (item.id === reportId && item.type === 'report') {
+          return {
+            ...item,
+            data: { ...item.data, status: newStatus },
+          };
+        }
+        return item;
+      });
+    });
+  }, []);
+
+  const updateReportPenaltyStatus = useCallback((reportId: string, newStatus: PenaltyStatus) => {
+    setHistory(prevHistory => {
+      return prevHistory.map(item => {
+        if (item.id === reportId && item.type === 'report') {
+          return {
+            ...item,
+            data: { ...item.data, penaltyStatus: newStatus },
+          };
+        }
+        return item;
+      });
+    });
+  }, []);
+
 
   useEffect(() => {
     if (reportCount === 1) {
@@ -80,6 +139,7 @@ const App: React.FC = () => {
   }, [reportCount, unlockBadge]);
   
   const renderView = () => {
+    const reports = history.filter(item => item.type === 'report') as ReportHistoryItem[];
     switch (currentView) {
       case View.CLASSIFIER:
         return <WasteClassifier unlockBadge={unlockBadge} addPoints={addPoints} addClassificationToHistory={addClassificationToHistory} />;
@@ -93,6 +153,10 @@ const App: React.FC = () => {
         return <Chatbot unlockBadge={unlockBadge} />;
       case View.PROFILE:
         return <UserProfile userName={userName} setUserName={handleSetUserName} />;
+      case View.ADMIN_DASHBOARD:
+        return <AdminDashboard reports={reports} updateReportStatus={updateReportStatus} updateReportPenaltyStatus={updateReportPenaltyStatus} />;
+      case View.TRANSPARENCY_DASHBOARD:
+        return <TransparencyDashboard reports={reports} />;
       case View.DASHBOARD:
       default:
         return (

@@ -170,6 +170,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ unlockBadge }) => {
                             )}
                         </div>
                         <button type="submit" disabled={isLoading || !input.trim()} className="bg-green-600 text-white font-bold p-3 rounded-full hover:bg-green-700 transition-colors disabled:bg-gray-400">
+                            {/* FIX: Corrected a typo in the viewBox attribute which was causing a parsing error. */}
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
                         </button>
                     </form>
