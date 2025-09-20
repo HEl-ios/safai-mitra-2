@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, GenerateContentResponse, Chat } from "@google/genai";
-import { WasteClassificationResult, QuizQuestion, Facility, QuizAnalysis, WasteMediaAuthenticationResult, ReportAnalysis } from '../types.ts';
+import { WasteClassificationResult, QuizQuestion, Facility, QuizAnalysis, WasteMediaAuthenticationResult, ReportAnalysis, HighValueRecyclableResult } from '../types.ts';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -217,6 +217,131 @@ export const analyzeReportedWaste = async (base64Image: string, mimeType: string
   }
 };
 
+const highValueRecyclableSchema = {
+  type: Type.OBJECT,
+  properties: {
+    wasteType: { type: Type.STRING, description: "General waste type.", enum: ['Wet Waste', 'Dry Waste', 'Hazardous', 'Recyclable', 'Unknown'] },
+    itemName: { type: Type.STRING, description: "Name of the item." },
+    description: { type: Type.STRING, description: "Brief description of the item." },
+    disposalInstructions: { type: Type.STRING, description: "General disposal instructions." },
+    recyclable: { type: Type.BOOLEAN, description: "Is it recyclable?" },
+    materialType: {
+      type: Type.STRING,
+      description: "Specific material type if identifiable.",
+      enum: ['PET', 'HDPE', 'Aluminum', 'Copper', 'Other', 'Unknown'],
+    },
+    estimatedValue: {
+      type: Type.STRING,
+      description: "An estimated market value for the recyclable material, in local currency (e.g., '₹5-10 per kg')."
+    },
+    valueDescription: {
+        type: Type.STRING,
+        description: "A brief one-sentence explanation of why this material has value."
+    },
+    handlingInstructions: {
+      type: Type.STRING,
+      description: "Specific instructions for waste workers on how to safely handle and prepare this material for sale."
+    }
+  },
+  required: ["wasteType", "itemName", "description", "disposalInstructions", "recyclable", "materialType", "estimatedValue", "valueDescription", "handlingInstructions"]
+};
+
+export const identifyHighValueRecyclable = async (base64Image: string, mimeType: string, language: 'en' | 'hi'): Promise<HighValueRecyclableResult> => {
+  try {
+    const langInstruction = language === 'hi' ? "Provide your response in Hindi, with currency values in INR (₹)." : "Provide your response in English, with currency values in INR (₹).";
+    const prompt = `You are an expert assistant for waste workers. Your task is to accurately identify the primary waste item in the provided image, focusing on its value as a recyclable material. 
+    1. Classify the item (Waste Type, Name, etc.).
+    2. Identify the specific material (e.g., PET, Aluminum).
+    3. Provide an estimated market value in Indian Rupees (₹).
+    4. Explain briefly why it's valuable.
+    5. Give clear instructions on how to handle it for sale.
+    Use the JSON schema for your response. Be precise and practical. ${langInstruction}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: {
+        parts: [
+          { inlineData: { data: base64Image, mimeType: mimeType } },
+          { text: prompt },
+        ],
+      },
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: highValueRecyclableSchema,
+        temperature: 0.2,
+      },
+    });
+
+    const jsonText = response.text.trim();
+    return JSON.parse(jsonText) as HighValueRecyclableResult;
+  } catch (error) {
+    console.error("Error identifying high-value recyclable:", error);
+    throw new Error("Failed to analyze the item. The AI model might be unable to identify it.");
+  }
+};
+
+// Fix: Add getMaterialFromImage function for the Upcycled Art Generator.
+export const getMaterialFromImage = async (base64Image: string, mimeType: string, language: 'en' | 'hi'): Promise<string> => {
+  try {
+    const langInstruction = language === 'hi' ? "Provide your response in Hindi." : "Provide your response in English.";
+    const prompt = `Analyze the image and identify the primary recyclable material shown. Respond with only the name of the material in lowercase, for example: 'plastic bottles', 'cardboard', 'tin cans', 'old newspapers', 'glass jars'. If you cannot identify a specific material, respond with 'unknown'. ${langInstruction}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64Image,
+              mimeType: mimeType,
+            },
+          },
+          { text: prompt },
+        ],
+      },
+      config: {
+        temperature: 0.1,
+      },
+    });
+
+    const material = response.text.trim().toLowerCase();
+    if (!material || material === 'unknown') {
+      throw new Error("Could not identify a specific material from the image.");
+    }
+    return material;
+  } catch (error) {
+    console.error("Error identifying material from image:", error);
+    throw new Error("Failed to identify material from the image.");
+  }
+};
+
+// Fix: Add generateUpcycledArt function for the Upcycled Art Generator.
+export const generateUpcycledArt = async (material: string, ideaPrompt: string): Promise<string> => {
+    try {
+        const fullPrompt = `Generate a visually appealing image of a creative art project made from upcycled ${material}. The project should be inspired by the idea: "${ideaPrompt}". The style should be vibrant, high-quality, and look like a real photograph of a DIY craft project.`;
+
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: fullPrompt,
+            config: {
+              numberOfImages: 1,
+              outputMimeType: 'image/png',
+              aspectRatio: '1:1',
+            },
+        });
+
+        if (!response.generatedImages || response.generatedImages.length === 0) {
+            throw new Error("The model did not generate any images.");
+        }
+
+        const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
+        return base64ImageBytes;
+
+    } catch (error) {
+        console.error("Error generating upcycled art:", error);
+        throw new Error("Failed to generate art. The AI model may have refused the prompt. Please try a different idea.");
+    }
+};
 
 export const createChat = (language: 'en' | 'hi'): Chat => {
     const systemInstruction = language === 'hi'
@@ -286,7 +411,7 @@ export const generateQuizQuestions = async (language: 'en' | 'hi'): Promise<Quiz
 export const findNearbyFacilities = async (latitude: number, longitude: number, language: 'en' | 'hi'): Promise<Facility[]> => {
     try {
       const langInstruction = language === 'hi' ? 'Provide the facility names and addresses in Hindi if possible.' : '';
-      const prompt = `List up to 5 waste management or recycling facilities near latitude ${latitude} and longitude ${longitude}. For each facility, provide its name and full address. Format each facility strictly on two consecutive lines like this, with no extra lines between facilities:
+      const prompt = `List up to 5 waste management or recycling facilities near latitude ${latitude} and longitude ${longitude}. For each facility, provide its name and full full address. Format each facility strictly on two consecutive lines like this, with no extra lines between facilities:
 Name: [Facility Name]
 Address: [Full Address]
 ${langInstruction}

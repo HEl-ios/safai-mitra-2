@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from '../types.ts';
-import { HomeIcon, ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, UserIcon, ShieldIcon } from './common/Icons.tsx';
+import { HomeIcon, ScanLineIcon, AlertTriangleIcon, UserIcon, ShieldIcon, BookOpenIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 
 interface BottomNavBarProps {
@@ -35,13 +35,14 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, setView }) => 
   const navItems = [
     { view: View.DASHBOARD, label: t('navHome'), icon: <HomeIcon /> },
     { view: View.CLASSIFIER, label: t('navClassify'), icon: <ScanLineIcon /> },
+    { view: View.TRAINING, label: t('navTraining'), icon: <BookOpenIcon /> },
     { view: View.REPORT, label: t('navReport'), icon: <AlertTriangleIcon /> },
     { view: View.PROFILE, label: t('navProfile'), icon: <UserIcon /> },
     { view: View.ADMIN_DASHBOARD, label: t('navAdmin'), icon: <ShieldIcon /> },
   ];
 
   return (
-    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-md z-20">
+    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-20">
       <div className="flex justify-around items-center bg-white/70 backdrop-blur-lg shadow-2xl shadow-gray-400/30 rounded-full h-20 px-2">
         {navItems.map((item) => (
           <NavItem

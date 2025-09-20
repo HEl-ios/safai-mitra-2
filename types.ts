@@ -11,6 +11,7 @@ export enum View {
   PROFILE = 'PROFILE',
   ADMIN_DASHBOARD = 'ADMIN_DASHBOARD',
   TRANSPARENCY_DASHBOARD = 'TRANSPARENCY_DASHBOARD',
+  TRAINING = 'TRAINING',
 }
 
 export interface WasteClassificationResult {
@@ -19,6 +20,14 @@ export interface WasteClassificationResult {
   description: string;
   disposalInstructions: string;
   recyclable: boolean;
+}
+
+// Added: New type for high-value recyclable identification.
+export interface HighValueRecyclableResult extends WasteClassificationResult {
+  materialType: 'PET' | 'HDPE' | 'Aluminum' | 'Copper' | 'Other' | 'Unknown';
+  estimatedValue: string; // e.g., "₹5-10 per kg"
+  valueDescription: string;
+  handlingInstructions: string;
 }
 
 export interface WasteMediaAuthenticationResult {

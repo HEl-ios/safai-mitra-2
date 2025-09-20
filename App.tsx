@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Badge, BadgeSlug, HistoryItem, WasteClassificationResult, ReportHistoryItem, ReportStatus, PenaltyStatus } from './types.ts';
 import { BADGE_DEFINITIONS } from './constants.tsx';
@@ -13,6 +14,7 @@ import UserProfile from './components/UserProfile.tsx';
 import BottomNavBar from './components/BottomNavBar.tsx';
 import AdminDashboard from './components/AdminDashboard.tsx';
 import TransparencyDashboard from './components/TransparencyDashboard.tsx';
+import TrainingHub from './components/training/TrainingHub.tsx';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
@@ -157,6 +159,8 @@ const App: React.FC = () => {
         return <AdminDashboard reports={reports} updateReportStatus={updateReportStatus} updateReportPenaltyStatus={updateReportPenaltyStatus} />;
       case View.TRANSPARENCY_DASHBOARD:
         return <TransparencyDashboard reports={reports} />;
+      case View.TRAINING:
+        return <TrainingHub addPoints={addPoints} unlockBadge={unlockBadge} />;
       case View.DASHBOARD:
       default:
         return (
