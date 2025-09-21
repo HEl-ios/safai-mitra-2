@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { View } from '../types.ts';
-import { HomeIcon, ScanLineIcon, AlertTriangleIcon, UserIcon, ShieldIcon, BookOpenIcon, UsersIcon } from './common/Icons.tsx';
+import { HomeIcon, ScanLineIcon, AlertTriangleIcon, UserIcon, UsersIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 
 interface BottomNavBarProps {
@@ -32,22 +33,13 @@ const NavItem: React.FC<{
 const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentView, setView }) => {
   const { t } = useTranslation();
   
-  const navItems = [
+  const items = [
     { view: View.DASHBOARD, label: t('navHome'), icon: <HomeIcon /> },
     { view: View.CLASSIFIER, label: t('navClassify'), icon: <ScanLineIcon /> },
     { view: View.COMMUNITY, label: t('navCommunity'), icon: <UsersIcon /> },
     { view: View.REPORT, label: t('navReport'), icon: <AlertTriangleIcon /> },
     { view: View.PROFILE, label: t('navProfile'), icon: <UserIcon /> },
   ];
-
-  const adminNavItems = [
-    ...navItems.slice(0, 5),
-    { view: View.ADMIN_DASHBOARD, label: t('navAdmin'), icon: <ShieldIcon /> },
-  ];
-
-  // A simple way to toggle the admin view for demonstration
-  // In a real app, this would be based on user roles
-  const items = window.location.search.includes('admin=true') ? adminNavItems : navItems;
 
 
   return (
