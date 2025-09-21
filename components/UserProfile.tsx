@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import Card from './common/Card.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
@@ -8,11 +9,14 @@ import { BellIcon } from './common/Icons.tsx';
 interface UserProfileProps {
     userName: string;
     setUserName: (name: string) => void;
+    buildingId: string;
+    setBuildingId: (id: string) => void;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ userName, setUserName }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ userName, setUserName, buildingId, setBuildingId }) => {
     const { t, language, setLanguage } = useTranslation();
     const [currentName, setCurrentName] = useState(userName);
+    const [currentBuildingId, setCurrentBuildingId] = useState(buildingId);
     const [saved, setSaved] = useState(false);
     const [notificationPerm, setNotificationPerm] = useState<NotificationPermission>('default');
     const [notificationPrefs, setNotificationPrefs] = useState({
@@ -37,6 +41,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userName, setUserName }) => {
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         setUserName(currentName);
+        setBuildingId(currentBuildingId);
         localStorage.setItem('notificationPrefs', JSON.stringify(notificationPrefs));
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
@@ -65,6 +70,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ userName, setUserName }) => {
                             value={currentName === 'Eco-Warrior' ? '' : currentName}
                             onChange={(e) => setCurrentName(e.target.value)}
                             placeholder={t('profileNamePlaceholder')}
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm px-3 py-2 text-base text-gray-900 placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-200 focus:outline-none transition-all duration-200"
+                        />
+                    </div>
+                     <div>
+                        <label htmlFor="buildingId" className="block text-sm font-medium text-gray-700">
+                            {t('profileBuildingLabel')}
+                        </label>
+                        <input
+                            type="text"
+                            id="buildingId"
+                            value={currentBuildingId}
+                            onChange={(e) => setCurrentBuildingId(e.target.value)}
+                            placeholder={t('profileBuildingPlaceholder')}
                             className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm px-3 py-2 text-base text-gray-900 placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-200 focus:outline-none transition-all duration-200"
                         />
                     </div>

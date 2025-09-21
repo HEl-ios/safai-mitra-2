@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ReportHistoryItem, ReportStatus, PenaltyStatus } from '../types.ts';
+import { ReportHistoryItem, ReportStatus, PenaltyStatus, Building, PenaltyType, Penalty } from '../types.ts';
 import Card from './common/Card.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 import { AlertTriangleIcon, ClockIcon, ChevronDownIcon, MapPinIcon, DollarSignIcon } from './common/Icons.tsx';
@@ -8,6 +8,10 @@ interface AdminDashboardProps {
   reports: ReportHistoryItem[];
   updateReportStatus: (reportId: string, newStatus: ReportStatus) => void;
   updateReportPenaltyStatus: (reportId: string, newStatus: PenaltyStatus) => void;
+  assignBuildingToReport: (reportId: string, buildingId: string) => void;
+  buildings: Building[];
+  addWarningToBuilding: (buildingId: string, reason: string) => void;
+  addPenaltyToBuilding: (buildingId: string, penalty: Omit<Penalty, 'id' | 'timestamp' | 'isResolved'>) => void;
 }
 
 const getStatusClasses = (status: ReportStatus | PenaltyStatus): string => {
@@ -41,9 +45,11 @@ const StatusBadge: React.FC<{ status: ReportStatus | PenaltyStatus; isLarge?: bo
     );
 };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportStatus, updateReportPenaltyStatus }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportStatus, updateReportPenaltyStatus, assignBuildingToReport, buildings, addWarningToBuilding, addPenaltyToBuilding }) => {
   const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState('');
+  const [showPenaltyModal, setShowPenaltyModal] = useState<string | null>(null); // Holds buildingId
 
   const stats = useMemo(() => {
     return reports.reduce(
@@ -59,6 +65,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
 
   const toggleExpand = (id: string) => {
     setExpandedId(prevId => (prevId === id ? null : id));
+    setSelectedBuilding(''); // Reset building selection on collapse/expand
+  };
+
+  const handleAssignBuilding = (reportId: string) => {
+    if (selectedBuilding) {
+        assignBuildingToReport(reportId, selectedBuilding);
+    }
+  };
+  
+  const handleApplyPenalty = (buildingId: string, type: PenaltyType) => {
+      const details = type === 'Fine' ? 'Fine of ₹5000 for repeated non-compliance' : 'Waste collection suspended for 3 days';
+      addPenaltyToBuilding(buildingId, { type, details });
+      setShowPenaltyModal(null);
   };
   
   // Sort reports to show Pending first, then In Progress, then newest first
@@ -99,6 +118,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
             <div className="space-y-3">
               {sortedReports.map((report) => {
                 const isExpanded = expandedId === report.id;
+                const buildingOfReport = buildings.find(b => b.id === report.data.buildingId);
+                const reportsForBuilding = buildingOfReport ? reports.filter(r => r.data.buildingId === buildingOfReport.id) : [];
+
                 return (
                   <div key={report.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                     <button 
@@ -120,6 +142,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
                                 <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
                                     <ClockIcon className="w-3 h-3"/>
                                     <span>{report.timestamp.toLocaleString()}</span>
+                                    {buildingOfReport && <span className="font-semibold text-blue-600">({buildingOfReport.name})</span>}
                                 </div>
                             </div>
                         </div>
@@ -163,19 +186,37 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
                                 </div>
                             </div>
                         )}
-                        <div className="border-t pt-4">
-                            <div className="flex justify-between items-center mb-2">
-                                <h4 className="font-semibold text-sm">{t('penaltyStatusSectionTitle')}</h4>
-                                <StatusBadge status={report.data.penaltyStatus} type="penalty" />
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {report.data.status !== 'Resolved' && (
-                                    <button onClick={() => updateReportStatus(report.id, 'Resolved')} className="bg-green-600 text-white font-bold py-1 px-3 rounded-lg hover:bg-green-700 text-sm">{t('markResolved')}</button>
-                                )}
-                                {report.data.penaltyStatus === 'Drafted' && (
-                                    <button onClick={() => updateReportPenaltyStatus(report.id, 'Issued')} className="bg-red-600 text-white font-bold py-1 px-3 rounded-lg hover:bg-red-700 text-sm">{t('issuePenalty')}</button>
-                                )}
-                            </div>
+                        <div className="border-t pt-4 space-y-3">
+                            {!report.data.buildingId && (
+                                <div>
+                                    <label htmlFor={`building-select-${report.id}`} className="font-semibold text-sm mb-1 block">{t('assignBuilding')}</label>
+                                    <div className="flex gap-2">
+                                        <select id={`building-select-${report.id}`} value={selectedBuilding} onChange={(e) => setSelectedBuilding(e.target.value)} className="flex-grow rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                                            <option value="">Select a building...</option>
+                                            {buildings.map(b => <option key={b.id} value={b.id}>{b.name} - {b.address}</option>)}
+                                        </select>
+                                        <button onClick={() => handleAssignBuilding(report.id)} disabled={!selectedBuilding} className="bg-blue-600 text-white font-bold py-1 px-3 rounded-lg hover:bg-blue-700 text-sm disabled:bg-gray-400">{t('confirm')}</button>
+                                    </div>
+                                </div>
+                            )}
+
+                             {buildingOfReport && (
+                                <div>
+                                    <h4 className="font-semibold text-sm mb-2">{t('enforcementActions')} for {buildingOfReport.name}</h4>
+                                    <p className="text-xs text-gray-500 mb-2">This building has {reportsForBuilding.length} report(s) associated with it.</p>
+                                    <div className="flex flex-wrap gap-2 relative">
+                                        <button onClick={() => addWarningToBuilding(buildingOfReport.id, `Warning issued based on report #${report.id.slice(-4)} and other similar reports.`)} className="bg-yellow-500 text-white font-bold py-1 px-3 rounded-lg hover:bg-yellow-600 text-sm">{t('issueWarning')}</button>
+                                        <button onClick={() => setShowPenaltyModal(buildingOfReport.id)} className="bg-red-600 text-white font-bold py-1 px-3 rounded-lg hover:bg-red-700 text-sm">{t('applyPenalty')}</button>
+                                        
+                                        {showPenaltyModal === buildingOfReport.id && (
+                                            <div className="absolute top-full left-0 mt-2 bg-white border rounded-lg shadow-xl z-10 p-2 space-y-2">
+                                                <button onClick={() => handleApplyPenalty(buildingOfReport.id, 'Fine')} className="w-full text-left text-sm p-2 hover:bg-gray-100 rounded">{t('penaltyTypeFine')}</button>
+                                                <button onClick={() => handleApplyPenalty(buildingOfReport.id, 'CollectionSuspended')} className="w-full text-left text-sm p-2 hover:bg-gray-100 rounded">{t('penaltyTypeSuspend')}</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                       </div>
                     )}

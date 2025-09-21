@@ -12,6 +12,8 @@ export enum View {
   ADMIN_DASHBOARD = 'ADMIN_DASHBOARD',
   TRANSPARENCY_DASHBOARD = 'TRANSPARENCY_DASHBOARD',
   TRAINING = 'TRAINING',
+  COMMUNITY = 'COMMUNITY',
+  BUILDING_STATUS = 'BUILDING_STATUS',
 }
 
 export interface WasteClassificationResult {
@@ -88,6 +90,7 @@ export interface ReportHistoryItem {
     description: string;
     location?: { latitude: number; longitude: number };
     status: ReportStatus;
+    buildingId?: string;
     // Added: Optional fields for advanced AI analysis and penalty tracking.
     analysis?: ReportAnalysis;
     penaltyStatus: PenaltyStatus;
@@ -99,4 +102,54 @@ export type HistoryItem = ClassificationHistoryItem | ReportHistoryItem;
 export interface Facility {
   name: string;
   address: string;
+}
+
+export interface Community {
+    id: string;
+    name: string;
+    description: string;
+    creatorId: string;
+    creatorName: string;
+    timestamp: string;
+}
+
+export interface CommunityMember {
+    userId: string;
+    userName: string;
+}
+
+export interface CommunityMessage {
+    id: string;
+    communityId: string;
+    senderId: string;
+    senderName: string;
+    text: string;
+    timestamp: string;
+}
+
+export type PenaltyType = 'Fine' | 'CollectionSuspended';
+
+export interface Warning {
+    id: string;
+    timestamp: string;
+    reason: string;
+}
+
+export interface Penalty {
+    id: string;
+    timestamp: string;
+    type: PenaltyType;
+    details: string; // e.g., "Fine of ₹5000" or "Collection suspended for 3 days"
+    isResolved: boolean;
+}
+
+export type BuildingStatus = 'Compliant' | 'UnderReview' | 'WarningIssued' | 'PenaltyActive';
+
+export interface Building {
+    id: string;
+    name: string;
+    address: string;
+    status: BuildingStatus;
+    warnings: Warning[];
+    penalties: Penalty[];
 }

@@ -3,7 +3,7 @@
 import React from 'react';
 import { View, Badge, HistoryItem, ReportHistoryItem } from '../types.ts';
 import Card from './common/Card.tsx';
-import { ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, MessageSquareIcon, BarChartIcon, GraduationCapIcon } from './common/Icons.tsx';
+import { ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, MessageSquareIcon, BarChartIcon, GraduationCapIcon, UsersIcon, ShieldCheckIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 import HistoryList from './HistoryList.tsx';
 import ReportMap from './ReportMap.tsx';
@@ -69,6 +69,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history,
       view: View.TRAINING,
     },
     {
+      icon: <UsersIcon />,
+      title: t('featureCommunityTitle'),
+      description: t('featureCommunityDescription'),
+      view: View.COMMUNITY,
+    },
+    {
       icon: <BrainCircuitIcon />,
       title: t('featureQuizTitle'),
       description: t('featureQuizDescription'),
@@ -92,6 +98,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history,
       description: t('featureTransparencyDescription'),
       view: View.TRANSPARENCY_DASHBOARD,
     },
+    {
+      icon: <ShieldCheckIcon />,
+      title: t('featureBuildingStatusTitle'),
+      description: t('featureBuildingStatusDescription'),
+      view: View.BUILDING_STATUS,
+    },
   ];
   
   const reportHistory = history.filter(item => item.type === 'report') as ReportHistoryItem[];
@@ -103,7 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history,
         <p className="max-w-2xl mx-auto">{t('dashboardSubtitle')}</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {features.map((feature) => (
           <FeatureCard
             key={feature.title}
