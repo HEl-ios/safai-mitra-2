@@ -1,5 +1,3 @@
-
-
 export const hi = {
   // Header
   appName: 'सफाई मित्र',
@@ -268,4 +266,28 @@ export const hi = {
   swmCellDesc: 'कर्नाटक में ठोस अपशिष्ट प्रबंधन नीतियों और कार्यान्वयन की देखरेख करता है।',
   website: 'वेबसाइट',
   contact: 'संपर्क',
+  // Tutorial Videos
+  trainingVideosTitle: 'ट्यूटोरियल वीडियो',
+  trainingVideosDescription: 'अपशिष्ट प्रबंधन के बारे में जानने के लिए वीडियो देखें।',
+  tutorialVideosTitle: 'वीडियो लर्निंग लाइब्रेरी',
+  tutorialVideosDescription: 'आपको देखकर सीखने में मदद करने के लिए क्यूरेटेड वीडियो प्लेलिस्ट। शुरू करने के लिए एक श्रेणी और स्तर चुनें।',
+  videosForCitizens: 'नागरिकों के लिए',
+  videosForWorkers: 'अपशिष्ट कर्मियों के लिए',
+  beginners: 'शुरुआती',
+  intermediate: 'मध्यवर्ती',
+  experts: 'विशेषज्ञ',
+  // Video Titles (Citizen)
+  citizenBeginnerVideo1: 'घर पर कचरा कैसे अलग करें',
+  citizenBeginnerVideo2: 'गीला और सूखा कचरा क्या है?',
+  citizenIntermediateVideo1: 'शुरुआती लोगों के लिए होम कम्पोस्टिंग',
+  citizenIntermediateVideo2: 'प्लास्टिक रीसाइक्लिंग कोड को समझना',
+  citizenExpertVideo1: 'ई-कचरे का सुरक्षित निपटान कैसे करें',
+  citizenExpertVideo2: 'चक्रीय अर्थव्यवस्था की व्याख्या',
+  // Video Titles (Waste Worker)
+  workerBeginnerVideo1: 'पीपीई (सुरक्षा गियर) का महत्व',
+  workerBeginnerVideo2: 'सुरक्षित अपशिष्ट प्रबंधन प्रथाएं',
+  workerIntermediateVideo1: 'विभिन्न प्रकार के प्लास्टिक की पहचान करना',
+  workerIntermediateVideo2: 'डिजिटल भुगतान का परिचय (UPI)',
+  workerExpertVideo1: 'एक बेलिंग मशीन कैसे काम करती है',
+  workerExpertVideo2: 'रीसाइक्लिंग आपूर्ति श्रृंखला',
 };

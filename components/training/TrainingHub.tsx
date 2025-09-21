@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../../i18n/useTranslation.ts';
 // Fix: Import icons for training modules.
-import { UsersIcon, BriefcaseIcon, ArrowLeftIcon, GraduationCapIcon, BookOpenIcon, ScanLineIcon, ShieldIcon, DollarSignIcon, BrushIcon, BuildingIcon } from '../common/Icons.tsx';
+import { UsersIcon, BriefcaseIcon, ArrowLeftIcon, GraduationCapIcon, BookOpenIcon, ScanLineIcon, ShieldIcon, DollarSignIcon, BrushIcon, BuildingIcon, PlayCircleIcon } from '../common/Icons.tsx';
 import Card from '../common/Card.tsx';
 import { BadgeSlug } from '../../types.ts';
 import SegregationMasterclass from './SegregationMasterclass.tsx';
@@ -11,8 +11,9 @@ import SafetyTraining from './SafetyTraining.tsx';
 import FinancialLiteracy from './FinancialLiteracy.tsx';
 import UpcycledArtGenerator from '../UpcycledArtGenerator.tsx';
 import AuthoritiesNGOs from './AuthoritiesNGOs.tsx';
+import TutorialVideos from './TutorialVideos.tsx';
 
-type TrainingView = 'main' | 'segregation' | 'education' | 'identifier' | 'safety' | 'financial' | 'upcycledArt' | 'authorities';
+type TrainingView = 'main' | 'segregation' | 'education' | 'identifier' | 'safety' | 'financial' | 'upcycledArt' | 'authorities' | 'tutorialVideos';
 
 interface TrainingHubProps {
   addPoints: (points: number) => void;
@@ -48,6 +49,8 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
   const [citizenModule, setCitizenModule] = useState<TrainingView | null>(null);
   const [workerModule, setWorkerModule] = useState<TrainingView | null>(null);
   const [authorityModule, setAuthorityModule] = useState<TrainingView | null>(null);
+  const [resourceModule, setResourceModule] = useState<TrainingView | null>(null);
+
 
   const citizenModules = [
     { view: 'segregation', icon: <GraduationCapIcon />, title: t('trainingSegregationTitle'), description: t('trainingSegregationDescription') },
@@ -71,6 +74,9 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
     if (workerModule === 'financial') return <SubModuleWrapper title={t('wasteWorkerTrainingTitle')} onBack={() => setWorkerModule(null)}><FinancialLiteracy /></SubModuleWrapper>;
 
     if (authorityModule === 'authorities') return <SubModuleWrapper title={t('trainingAuthoritiesTitle')} onBack={() => setAuthorityModule(null)}><AuthoritiesNGOs /></SubModuleWrapper>;
+    
+    if (resourceModule === 'tutorialVideos') return <SubModuleWrapper title={t('trainingHubTitle')} onBack={() => setResourceModule(null)}><TutorialVideos /></SubModuleWrapper>;
+
 
     return (
       <div className="space-y-8">
@@ -122,13 +128,32 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
              />
           </div>
         </Card>
+
+        <Card className="p-6">
+           <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-red-100 rounded-full"><PlayCircleIcon className="w-8 h-8 text-red-600" /></div>
+            <div>
+                <h3 className="text-2xl font-bold text-gray-800">{t('trainingVideosTitle')}</h3>
+                <p className="text-gray-500">{t('trainingVideosDescription')}</p>
+            </div>
+          </div>
+           <div className="grid grid-cols-1 gap-4">
+             <TrainingCard
+                key="tutorialVideos"
+                icon={<PlayCircleIcon />}
+                title={t('tutorialVideosTitle')}
+                description={t('tutorialVideosDescription')}
+                onClick={() => setResourceModule('tutorialVideos' as TrainingView)}
+              />
+          </div>
+        </Card>
       </div>
     );
   };
 
   return (
     <div className="max-w-4xl mx-auto">
-      {(!citizenModule && !workerModule && !authorityModule) && (
+      {(!citizenModule && !workerModule && !authorityModule && !resourceModule) && (
         <>
             <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">{t('trainingHubTitle')}</h2>
             <p className="text-center text-gray-500 mb-6">{t('trainingHubDescription')}</p>

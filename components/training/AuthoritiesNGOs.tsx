@@ -10,7 +10,7 @@ interface Contact {
 }
 
 const centralBodies: Contact[] = [
-  { nameKey: 'moefccName', descKey: 'moefccDesc', website: 'http://www.moef.nic.in/', phone: 'tel:+91-11-24695262' },
+  { nameKey: 'moefccName', descKey: 'moefccDesc', website: 'https://moefcc.gov.in/', phone: 'tel:+91-11-24695262' },
   { nameKey: 'cpcbName', descKey: 'cpcbDesc', website: 'https://cpcb.nic.in/', phone: 'tel:+91-11-43102030' },
 ];
 

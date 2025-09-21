@@ -1,5 +1,3 @@
-
-
 export const en = {
   // Header
   appName: 'Safai Mitra',
@@ -268,4 +266,28 @@ export const en = {
   swmCellDesc: 'Oversees solid waste management policies and implementation in Karnataka.',
   website: 'Website',
   contact: 'Contact',
+  // Tutorial Videos
+  trainingVideosTitle: 'Tutorial Videos',
+  trainingVideosDescription: 'Watch videos to learn about waste management.',
+  tutorialVideosTitle: 'Video Learning Library',
+  tutorialVideosDescription: 'Curated video playlists to help you learn visually. Select a category and level to get started.',
+  videosForCitizens: 'For Citizens',
+  videosForWorkers: 'For Waste Workers',
+  beginners: 'Beginners',
+  intermediate: 'Intermediate',
+  experts: 'Experts',
+  // Video Titles (Citizen)
+  citizenBeginnerVideo1: 'How to Segregate Waste at Home',
+  citizenBeginnerVideo2: 'What is Wet and Dry Waste?',
+  citizenIntermediateVideo1: 'Home Composting for Beginners',
+  citizenIntermediateVideo2: 'Understanding Plastic Recycling Codes',
+  citizenExpertVideo1: 'How to Dispose of E-waste Safely',
+  citizenExpertVideo2: 'The Circular Economy Explained',
+  // Video Titles (Waste Worker)
+  workerBeginnerVideo1: 'Importance of PPE (Safety Gear)',
+  workerBeginnerVideo2: 'Safe Waste Handling Practices',
+  workerIntermediateVideo1: 'Identifying Different Types of Plastic',
+  workerIntermediateVideo2: 'Intro to Digital Payments (UPI)',
+  workerExpertVideo1: 'How a Baling Machine Works',
+  workerExpertVideo2: 'The Recycling Supply Chain',
 };

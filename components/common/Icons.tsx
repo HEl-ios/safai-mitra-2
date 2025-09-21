@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 
 type IconProps = {
@@ -267,5 +265,12 @@ export const BuildingIcon: React.FC<IconProps> = ({ className }) => (
     <path d="M8 10h.01"/>
     <path d="M8 14h.01"/>
     <path d="M16 14h.01"/>
+  </svg>
+);
+
+export const PlayCircleIcon: React.FC<IconProps> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="10"/>
+    <polygon points="10 8 16 12 10 16 10 8"/>
   </svg>
 );
