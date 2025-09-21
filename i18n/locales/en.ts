@@ -1,4 +1,5 @@
 
+
 export const en = {
   // Header
   appName: 'Safai Mitra',
@@ -223,8 +224,9 @@ export const en = {
   identifierEstimatedValue: 'Estimated Value',
   identifierValueDesc: 'Why it\'s valuable',
   identifierHandling: 'Handling Instructions',
-  // Fix: Add new translation keys for the Upcycled Art Generator.
   // Upcycled Art Generator
+  upcycledArtGeneratorTitle: 'Upcycled Art Generator',
+  upcycledArtGeneratorDescription: 'Turn waste into wonder with AI-generated art ideas.',
   upcycledArtTitle: 'Upcycled Art Generator',
   upcycledArtDescription: 'Turn your waste into wonder! Get AI-generated ideas for creative upcycling projects.',
   artStep1: 'Step 1: Choose Your Material',
@@ -244,4 +246,26 @@ export const en = {
   generateAgain: 'Generate Another',
   downloadArt: 'Download Art',
   errorIdentifyingMaterial: 'Could not identify a usable material from the image. Please select one from the list.',
+  // Authorities & NGOs
+  trainingAuthoritiesTitle: 'Authorities & NGOs',
+  trainingAuthoritiesDescription: 'Contact government bodies and NGOs for support and information.',
+  authoritiesTitle: 'Authorities & NGOs Directory',
+  authoritiesDescription: 'Find contact information for key organizations in waste management.',
+  centralBodiesTitle: 'Central Government Bodies',
+  stateContactsTitle: 'State-Level Contacts',
+  selectState: 'Select a State',
+  moefccName: 'Ministry of Environment, Forest and Climate Change',
+  moefccDesc: 'The central agency for environmental policy and regulation.',
+  cpcbName: 'Central Pollution Control Board (CPCB)',
+  cpcbDesc: 'Responsible for prevention and control of water and air pollution.',
+  dpccName: 'Delhi Pollution Control Committee',
+  dpccDesc: 'The primary pollution control authority for the National Capital Territory of Delhi.',
+  chintanName: 'Chintan Environmental Research and Action Group',
+  chintanDesc: 'An NGO working on waste management solutions and empowering waste pickers.',
+  mpcbName: 'Maharashtra Pollution Control Board',
+  mpcbDesc: 'The principal environmental protection agency in the state of Maharashtra.',
+  swmCellName: 'SWM Cell, Urban Development Dept, Karnataka',
+  swmCellDesc: 'Oversees solid waste management policies and implementation in Karnataka.',
+  website: 'Website',
+  contact: 'Contact',
 };

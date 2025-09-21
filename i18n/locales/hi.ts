@@ -1,4 +1,5 @@
 
+
 export const hi = {
   // Header
   appName: 'सफाई मित्र',
@@ -223,8 +224,9 @@ export const hi = {
   identifierEstimatedValue: 'अनुमानित मूल्य',
   identifierValueDesc: 'यह मूल्यवान क्यों है',
   identifierHandling: 'संभालने के निर्देश',
-  // Fix: Add new translation keys for the Upcycled Art Generator.
   // Upcycled Art Generator
+  upcycledArtGeneratorTitle: 'अपसाइकल्ड कला जेनरेटर',
+  upcycledArtGeneratorDescription: 'एआई-जनित कला विचारों के साथ कचरे को आश्चर्य में बदलें।',
   upcycledArtTitle: 'अपसाइकल्ड कला जेनरेटर',
   upcycledArtDescription: 'अपने कचरे को अद्भुत कला में बदलें! रचनात्मक अपसाइक्लिंग परियोजनाओं के लिए एआई-जनित विचार प्राप्त करें।',
   artStep1: 'चरण 1: अपनी सामग्री चुनें',
@@ -244,4 +246,26 @@ export const hi = {
   generateAgain: 'दूसरा बनाएं',
   downloadArt: 'कला डाउनलोड करें',
   errorIdentifyingMaterial: 'छवि से प्रयोग करने योग्य सामग्री की पहचान नहीं हो सकी। कृपया सूची से एक चुनें।',
+  // Authorities & NGOs
+  trainingAuthoritiesTitle: 'प्राधिकरण और एनजीओ',
+  trainingAuthoritiesDescription: 'समर्थन और जानकारी के लिए सरकारी निकायों और एनजीओ से संपर्क करें।',
+  authoritiesTitle: 'प्राधिकरण और एनजीओ निर्देशिका',
+  authoritiesDescription: 'अपशिष्ट प्रबंधन में प्रमुख संगठनों के लिए संपर्क जानकारी प्राप्त करें।',
+  centralBodiesTitle: 'केंद्र सरकार के निकाय',
+  stateContactsTitle: 'राज्य-स्तरीय संपर्क',
+  selectState: 'एक राज्य चुनें',
+  moefccName: 'पर्यावरण, वन और जलवायु परिवर्तन मंत्रालय',
+  moefccDesc: 'पर्यावरण नीति और विनियमन के लिए केंद्रीय एजेंसी।',
+  cpcbName: 'केंद्रीय प्रदूषण नियंत्रण बोर्ड (CPCB)',
+  cpcbDesc: 'जल और वायु प्रदूषण की रोकथाम और नियंत्रण के लिए जिम्मेदार।',
+  dpccName: 'दिल्ली प्रदूषण नियंत्रण समिति',
+  dpccDesc: 'दिल्ली के राष्ट्रीय राजधानी क्षेत्र के लिए प्राथमिक प्रदूषण नियंत्रण प्राधिकरण।',
+  chintanName: 'चिंतन पर्यावरण अनुसंधान और कार्रवाई समूह',
+  chintanDesc: 'एक एनजीओ जो अपशिष्ट प्रबंधन समाधान और कचरा बीनने वालों को सशक्त बनाने पर काम कर रहा है।',
+  mpcbName: 'महाराष्ट्र प्रदूषण नियंत्रण बोर्ड',
+  mpcbDesc: 'महाराष्ट्र राज्य में प्रमुख पर्यावरण संरक्षण एजेंसी।',
+  swmCellName: 'एसडब्ल्यूएम सेल, शहरी विकास विभाग, कर्नाटक',
+  swmCellDesc: 'कर्नाटक में ठोस अपशिष्ट प्रबंधन नीतियों और कार्यान्वयन की देखरेख करता है।',
+  website: 'वेबसाइट',
+  contact: 'संपर्क',
 };

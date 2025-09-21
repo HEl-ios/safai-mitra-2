@@ -280,7 +280,6 @@ export const identifyHighValueRecyclable = async (base64Image: string, mimeType:
   }
 };
 
-// Fix: Add getMaterialFromImage function for the Upcycled Art Generator.
 export const getMaterialFromImage = async (base64Image: string, mimeType: string, language: 'en' | 'hi'): Promise<string> => {
   try {
     const langInstruction = language === 'hi' ? "Provide your response in Hindi." : "Provide your response in English.";
@@ -315,7 +314,6 @@ export const getMaterialFromImage = async (base64Image: string, mimeType: string
   }
 };
 
-// Fix: Add generateUpcycledArt function for the Upcycled Art Generator.
 export const generateUpcycledArt = async (material: string, ideaPrompt: string): Promise<string> => {
     try {
         const fullPrompt = `Generate a visually appealing image of a creative art project made from upcycled ${material}. The project should be inspired by the idea: "${ideaPrompt}". The style should be vibrant, high-quality, and look like a real photograph of a DIY craft project.`;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../../i18n/useTranslation.ts';
 // Fix: Import icons for training modules.
-import { UsersIcon, BriefcaseIcon, ArrowLeftIcon, GraduationCapIcon, BookOpenIcon, ScanLineIcon, ShieldIcon, DollarSignIcon } from '../common/Icons.tsx';
+import { UsersIcon, BriefcaseIcon, ArrowLeftIcon, GraduationCapIcon, BookOpenIcon, ScanLineIcon, ShieldIcon, DollarSignIcon, BrushIcon, BuildingIcon } from '../common/Icons.tsx';
 import Card from '../common/Card.tsx';
 import { BadgeSlug } from '../../types.ts';
 import SegregationMasterclass from './SegregationMasterclass.tsx';
@@ -9,8 +9,10 @@ import EducationalHub from './EducationalHub.tsx';
 import RecyclableIdentifier from './RecyclableIdentifier.tsx';
 import SafetyTraining from './SafetyTraining.tsx';
 import FinancialLiteracy from './FinancialLiteracy.tsx';
+import UpcycledArtGenerator from '../UpcycledArtGenerator.tsx';
+import AuthoritiesNGOs from './AuthoritiesNGOs.tsx';
 
-type TrainingView = 'main' | 'segregation' | 'education' | 'identifier' | 'safety' | 'financial';
+type TrainingView = 'main' | 'segregation' | 'education' | 'identifier' | 'safety' | 'financial' | 'upcycledArt' | 'authorities';
 
 interface TrainingHubProps {
   addPoints: (points: number) => void;
@@ -43,14 +45,14 @@ const SubModuleWrapper: React.FC<{ title: string; onBack: () => void; children: 
 
 const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => {
   const { t } = useTranslation();
-  const [view, setView] = useState<TrainingView>('main');
   const [citizenModule, setCitizenModule] = useState<TrainingView | null>(null);
   const [workerModule, setWorkerModule] = useState<TrainingView | null>(null);
+  const [authorityModule, setAuthorityModule] = useState<TrainingView | null>(null);
 
-  // Fix: Added specific icons for each training module.
   const citizenModules = [
     { view: 'segregation', icon: <GraduationCapIcon />, title: t('trainingSegregationTitle'), description: t('trainingSegregationDescription') },
     { view: 'education', icon: <BookOpenIcon />, title: t('trainingEducationalTitle'), description: t('trainingEducationalDescription') },
+    { view: 'upcycledArt', icon: <BrushIcon />, title: t('upcycledArtGeneratorTitle'), description: t('upcycledArtGeneratorDescription') },
   ];
 
   const workerModules = [
@@ -62,9 +64,13 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
   const renderContent = () => {
     if (citizenModule === 'segregation') return <SubModuleWrapper title={t('citizenTrainingTitle')} onBack={() => setCitizenModule(null)}><SegregationMasterclass addPoints={addPoints} /></SubModuleWrapper>;
     if (citizenModule === 'education') return <SubModuleWrapper title={t('citizenTrainingTitle')} onBack={() => setCitizenModule(null)}><EducationalHub /></SubModuleWrapper>;
+    if (citizenModule === 'upcycledArt') return <SubModuleWrapper title={t('citizenTrainingTitle')} onBack={() => setCitizenModule(null)}><UpcycledArtGenerator /></SubModuleWrapper>;
+    
     if (workerModule === 'identifier') return <SubModuleWrapper title={t('wasteWorkerTrainingTitle')} onBack={() => setWorkerModule(null)}><RecyclableIdentifier addPoints={addPoints} unlockBadge={unlockBadge} /></SubModuleWrapper>;
     if (workerModule === 'safety') return <SubModuleWrapper title={t('wasteWorkerTrainingTitle')} onBack={() => setWorkerModule(null)}><SafetyTraining /></SubModuleWrapper>;
     if (workerModule === 'financial') return <SubModuleWrapper title={t('wasteWorkerTrainingTitle')} onBack={() => setWorkerModule(null)}><FinancialLiteracy /></SubModuleWrapper>;
+
+    if (authorityModule === 'authorities') return <SubModuleWrapper title={t('trainingAuthoritiesTitle')} onBack={() => setAuthorityModule(null)}><AuthoritiesNGOs /></SubModuleWrapper>;
 
     return (
       <div className="space-y-8">
@@ -76,8 +82,7 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
               <p className="text-gray-500">{t('citizenTrainingDescription')}</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Fix: Pass the module's icon instead of a placeholder div. */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {citizenModules.map(m => (
               <TrainingCard key={m.view} icon={m.icon} title={m.title} description={m.description} onClick={() => setCitizenModule(m.view as TrainingView)} />
             ))}
@@ -93,10 +98,28 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
             </div>
           </div>
            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Fix: Pass the module's icon instead of a placeholder div. */}
             {workerModules.map(m => (
               <TrainingCard key={m.view} icon={m.icon} title={m.title} description={m.description} onClick={() => setWorkerModule(m.view as TrainingView)} />
             ))}
+          </div>
+        </Card>
+        
+        <Card className="p-6">
+           <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-gray-100 rounded-full"><BuildingIcon className="w-8 h-8 text-gray-600" /></div>
+            <div>
+                <h3 className="text-2xl font-bold text-gray-800">{t('trainingAuthoritiesTitle')}</h3>
+                <p className="text-gray-500">{t('trainingAuthoritiesDescription')}</p>
+            </div>
+          </div>
+           <div className="grid grid-cols-1 gap-4">
+             <TrainingCard 
+                key="authorities" 
+                icon={<BuildingIcon />} 
+                title={t('authoritiesTitle')} 
+                description={t('authoritiesDescription')} 
+                onClick={() => setAuthorityModule('authorities' as TrainingView)} 
+             />
           </div>
         </Card>
       </div>
@@ -105,7 +128,7 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
 
   return (
     <div className="max-w-4xl mx-auto">
-      {(citizenModule || workerModule) === null && (
+      {(!citizenModule && !workerModule && !authorityModule) && (
         <>
             <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">{t('trainingHubTitle')}</h2>
             <p className="text-center text-gray-500 mb-6">{t('trainingHubDescription')}</p>

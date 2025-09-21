@@ -246,3 +246,26 @@ export const BriefcaseIcon: React.FC<IconProps> = ({ className }) => (
     <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
   </svg>
 );
+
+export const BrushIcon: React.FC<IconProps> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m22 2-7 7 5 5-7 7"/>
+    <path d="M14 6 3 17.1C2.5 17.6 2 18.5 2 19.2c0 1.5 1.3 2.8 2.8 2.8 1 0 1.6-.4 2.2-1L18 10"/>
+  </svg>
+);
+
+export const BuildingIcon: React.FC<IconProps> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/>
+    <path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/>
+    <path d="M12 14h.01"/>
+    <path d="M16 10h.01"/>
+    <path d="M8 10h.01"/>
+    <path d="M8 14h.01"/>
+    <path d="M16 14h.01"/>
+  </svg>
+);

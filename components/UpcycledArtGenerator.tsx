@@ -170,7 +170,7 @@ const UpcycledArtGenerator: React.FC = () => {
                     <a
                         href={generatedImage}
                         download="upcycled-art.png"
-                        className="w-full block bg-gray-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="w-full block bg-gray-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors text-center"
                     >
                         {t('downloadArt')}
                     </a>
