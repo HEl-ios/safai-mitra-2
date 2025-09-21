@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { ReportHistoryItem, ReportStatus, PenaltyStatus, Building, PenaltyType, Penalty } from '../types.ts';
+import { ReportHistoryItem, ReportStatus, PenaltyStatus, Building, PenaltyType, Penalty, Vehicle, VehicleStatus } from '../types.ts';
 import Card from './common/Card.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
-import { AlertTriangleIcon, ClockIcon, ChevronDownIcon, MapPinIcon, DollarSignIcon } from './common/Icons.tsx';
+import { AlertTriangleIcon, ClockIcon, ChevronDownIcon, MapPinIcon, DollarSignIcon, TruckIcon } from './common/Icons.tsx';
+import LiveDispatchMap from './LiveDispatchMap.tsx';
 
 interface AdminDashboardProps {
   reports: ReportHistoryItem[];
@@ -12,6 +13,8 @@ interface AdminDashboardProps {
   buildings: Building[];
   addWarningToBuilding: (buildingId: string, reason: string) => void;
   addPenaltyToBuilding: (buildingId: string, penalty: Omit<Penalty, 'id' | 'timestamp' | 'isResolved'>) => void;
+  vehicles: Vehicle[];
+  dispatchVehicleToReport: (vehicleId: string, reportId: string) => void;
 }
 
 const getStatusClasses = (status: ReportStatus | PenaltyStatus): string => {
@@ -45,7 +48,7 @@ const StatusBadge: React.FC<{ status: ReportStatus | PenaltyStatus; isLarge?: bo
     );
 };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportStatus, updateReportPenaltyStatus, assignBuildingToReport, buildings, addWarningToBuilding, addPenaltyToBuilding }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportStatus, updateReportPenaltyStatus, assignBuildingToReport, buildings, addWarningToBuilding, addPenaltyToBuilding, vehicles, dispatchVehicleToReport }) => {
   const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState('');
@@ -62,6 +65,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
       { total: 0, pending: 0, resolved: 0 }
     );
   }, [reports]);
+
+  const idleVehicles = useMemo(() => vehicles.filter(v => v.status === VehicleStatus.IDLE), [vehicles]);
+
+  const getVehicleForReport = (reportId: string) => {
+      return vehicles.find(v => v.assignedReportId === reportId);
+  }
 
   const toggleExpand = (id: string) => {
     setExpandedId(prevId => (prevId === id ? null : id));
@@ -112,6 +121,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
       </div>
 
       <div>
+        <h3 className="text-2xl font-bold text-gray-800 mb-4">{t('liveDispatchMap')}</h3>
+        <Card className="p-2">
+            <LiveDispatchMap reports={reports} vehicles={vehicles} />
+        </Card>
+      </div>
+
+      <div>
         <h3 className="text-2xl font-bold text-gray-800 mb-4">{t('allReports')}</h3>
         <Card className="p-4 sm:p-6">
           {reports.length > 0 ? (
@@ -120,6 +136,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
                 const isExpanded = expandedId === report.id;
                 const buildingOfReport = buildings.find(b => b.id === report.data.buildingId);
                 const reportsForBuilding = buildingOfReport ? reports.filter(r => r.data.buildingId === buildingOfReport.id) : [];
+                const assignedVehicle = getVehicleForReport(report.id);
 
                 return (
                   <div key={report.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -186,6 +203,43 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
                                 </div>
                             </div>
                         )}
+                        <div className="border-t pt-4">
+                            {report.data.status === 'Pending' && report.data.location && !assignedVehicle && (
+                                <div>
+                                    <h4 className="font-semibold text-sm mb-2">{t('dispatchVehicle')}</h4>
+                                    {idleVehicles.length > 0 ? (
+                                        <ul className="space-y-2">
+                                            {idleVehicles.map(vehicle => (
+                                                <li key={vehicle.id} className="flex justify-between items-center p-2 bg-white rounded-lg border">
+                                                    <div className="flex items-center gap-2">
+                                                        <TruckIcon className="w-5 h-5 text-green-600"/>
+                                                        <span className="font-semibold">{vehicle.id}</span>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => dispatchVehicleToReport(vehicle.id, report.id)}
+                                                        className="bg-green-600 text-white font-bold py-1 px-3 rounded-lg text-sm hover:bg-green-700"
+                                                    >
+                                                        {t('dispatch')}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 italic">{t('noAvailableVehicles')}</p>
+                                    )}
+                                </div>
+                            )}
+
+                             {assignedVehicle && (
+                                <div>
+                                    <h4 className="font-semibold text-sm mb-2">{t('vehicleStatus')}</h4>
+                                    <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+                                        <TruckIcon className="w-5 h-5 text-blue-600"/>
+                                        <p className="text-sm font-semibold text-blue-800">{t('vehicleEnRoute', { id: assignedVehicle.id })}</p>
+                                    </div>
+                                </div>
+                             )}
+                        </div>
                         <div className="border-t pt-4 space-y-3">
                             {!report.data.buildingId && (
                                 <div>

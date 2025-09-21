@@ -14,6 +14,8 @@ export enum View {
   TRAINING = 'TRAINING',
   COMMUNITY = 'COMMUNITY',
   BUILDING_STATUS = 'BUILDING_STATUS',
+  MARKETPLACE = 'MARKETPLACE',
+  B2B_PORTAL = 'B2B_PORTAL',
 }
 
 export interface WasteClassificationResult {
@@ -58,7 +60,7 @@ export interface QuizAnalysis {
   nextSteps: string;
 }
 
-export type BadgeSlug = 'first-scan' | 'quiz-master' | 'eco-reporter' | 'chat-champ' | 'novice-recycler' | 'community-helper';
+export type BadgeSlug = 'first-scan' | 'quiz-master' | 'eco-reporter' | 'chat-champ' | 'novice-recycler' | 'community-helper' | 'scrap-seller' | 'corporate-citizen';
 
 export interface Badge {
   slug: BadgeSlug;
@@ -152,4 +154,66 @@ export interface Building {
     status: BuildingStatus;
     warnings: Warning[];
     penalties: Penalty[];
+}
+
+export type PickupStatus = 'Pending' | 'Completed' | 'Cancelled';
+
+export interface PickupRequest {
+    id: string;
+    userId: string;
+    materialType: string;
+    estimatedWeight: string;
+    address: string;
+    contactNumber: string;
+    photo?: string;
+    status: PickupStatus;
+    timestamp: string;
+}
+
+// B2B Portal Types
+export type BulkWasteType = 'E-waste' | 'Plastics' | 'Organic' | 'Mixed Commercial' | 'Construction Debris';
+export type BulkPickupStatus = 'Requested' | 'Scheduled' | 'Completed';
+
+export interface BulkPickupRequest {
+    id: string;
+    businessId: string; // Using userId for this
+    wasteType: BulkWasteType;
+    estimatedWeightKg: number;
+    preferredDate: string;
+    status: BulkPickupStatus;
+    timestamp: string;
+    notes?: string;
+}
+
+export interface ComplianceReport {
+    id: string;
+    businessId: string;
+    period: string; // e.g., "Q2 2024"
+    generationDate: string;
+    summaryData: {
+        totalPickups: number;
+        totalWeightKg: number;
+        wasteBreakdown: Partial<Record<BulkWasteType, number>>;
+    };
+}
+
+// Admin Vehicle Tracking Types
+export enum VehicleStatus {
+  IDLE = 'Idle',
+  EN_ROUTE = 'En Route',
+  COLLECTING = 'Collecting',
+}
+
+export interface Vehicle {
+    id: string;
+    currentLocation: {
+        latitude: number;
+        longitude: number;
+    };
+    status: VehicleStatus;
+    assignedReportId?: string;
+    destination?: {
+        latitude: number;
+        longitude: number;
+    };
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { QuizQuestion, Badge } from './types.ts';
-import { RecycleIcon, BrainCircuitIcon, AlertTriangleIcon, MessageSquareIcon, StarIcon, UserIcon } from './components/common/Icons.tsx';
+import { RecycleIcon, BrainCircuitIcon, AlertTriangleIcon, MessageSquareIcon, StarIcon, UserIcon, DollarSignIcon, BriefcaseIcon } from './components/common/Icons.tsx';
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
@@ -72,5 +72,19 @@ export const BADGE_DEFINITIONS: Badge[] = [
     description: "Used the AI chatbot to learn something new.",
     icon: <MessageSquareIcon className="w-8 h-8 text-purple-500" />,
     points: 0,
+  },
+  {
+    slug: 'scrap-seller',
+    name: "First Sale!",
+    description: "You sold your first batch of recyclables. Ka-ching!",
+    icon: <DollarSignIcon className="w-8 h-8 text-amber-500" />,
+    points: 150,
+  },
+  {
+    slug: 'corporate-citizen',
+    name: "Corporate Citizen",
+    description: "Scheduled your first bulk waste pickup. Leading by example!",
+    icon: <BriefcaseIcon className="w-8 h-8 text-indigo-500" />,
+    points: 250,
   }
 ];

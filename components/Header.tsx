@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { View } from '../types.ts';
-import { GemIcon, LogoIcon, ArrowLeftIcon, ShieldIcon } from './common/Icons.tsx';
+import { GemIcon, LogoIcon, ArrowLeftIcon, ShieldIcon, BriefcaseIcon } from './common/Icons.tsx';
 import LanguageSwitcher from './LanguageSwitcher.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 
@@ -15,6 +14,8 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ setView, userPoints, currentView }) => {
   const { t } = useTranslation();
   const isAdmin = window.location.search.includes('admin=true');
+  const isBusiness = window.location.search.includes('business=true');
+
 
   return (
     <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-10">
@@ -50,6 +51,20 @@ const Header: React.FC<HeaderProps> = ({ setView, userPoints, currentView }) => 
               >
                 <ShieldIcon className="w-4 h-4" />
                 {t('navAdmin')}
+              </button>
+            )}
+            {isBusiness && (
+               <button
+                onClick={() => setView(View.B2B_PORTAL)}
+                className={`ml-4 flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                  currentView === View.B2B_PORTAL
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                }`}
+                aria-label="Go to Business Portal"
+              >
+                <BriefcaseIcon className="w-4 h-4" />
+                {t('navB2B')}
               </button>
             )}
           </div>

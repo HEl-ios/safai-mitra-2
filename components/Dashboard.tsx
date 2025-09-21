@@ -1,9 +1,11 @@
 
 
+
+
 import React from 'react';
 import { View, Badge, HistoryItem, ReportHistoryItem } from '../types.ts';
 import Card from './common/Card.tsx';
-import { ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, MessageSquareIcon, BarChartIcon, GraduationCapIcon, UsersIcon, ShieldCheckIcon } from './common/Icons.tsx';
+import { ScanLineIcon, MapPinIcon, BrainCircuitIcon, AlertTriangleIcon, MessageSquareIcon, BarChartIcon, GraduationCapIcon, UsersIcon, ShieldCheckIcon, DollarSignIcon, BriefcaseIcon } from './common/Icons.tsx';
 import { useTranslation } from '../i18n/useTranslation.ts';
 import HistoryList from './HistoryList.tsx';
 import ReportMap from './ReportMap.tsx';
@@ -75,6 +77,18 @@ const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history,
       view: View.COMMUNITY,
     },
     {
+      icon: <DollarSignIcon />,
+      title: t('featureMarketplaceTitle'),
+      description: t('featureMarketplaceDescription'),
+      view: View.MARKETPLACE,
+    },
+    {
+      icon: <BriefcaseIcon />,
+      title: t('featureB2BTitle'),
+      description: t('featureB2BDescription'),
+      view: View.B2B_PORTAL,
+    },
+    {
       icon: <BrainCircuitIcon />,
       title: t('featureQuizTitle'),
       description: t('featureQuizDescription'),
@@ -115,7 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history,
         <p className="max-w-2xl mx-auto">{t('dashboardSubtitle')}</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {features.map((feature) => (
           <FeatureCard
             key={feature.title}
