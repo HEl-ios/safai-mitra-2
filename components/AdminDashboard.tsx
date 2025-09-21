@@ -48,11 +48,50 @@ const StatusBadge: React.FC<{ status: ReportStatus | PenaltyStatus; isLarge?: bo
     );
 };
 
+// Date helper functions
+const isToday = (date: Date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+};
+
+const isThisWeek = (date: Date) => {
+    const today = new Date();
+    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    firstDayOfWeek.setHours(0,0,0,0);
+    const lastDayOfWeek = new Date(firstDayOfWeek);
+    lastDayOfWeek.setDate(lastDayOfWeek.getDate() + 6);
+    lastDayOfWeek.setHours(23,59,59,999);
+    return date >= firstDayOfWeek && date <= lastDayOfWeek;
+};
+
+const isOverdue = (date: Date, status: ReportStatus) => {
+    if (status !== 'Pending') return false;
+    const today = new Date();
+    const threeDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 3);
+    return date < threeDaysAgo;
+}
+
+const FilterButton: React.FC<{ label: string; isActive: boolean; onClick: () => void; }> = ({ label, isActive, onClick }) => (
+    <button
+        onClick={onClick}
+        className={`px-3 py-1 text-sm font-semibold rounded-full transition-colors ${
+            isActive ? 'bg-gray-800 text-white shadow' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportStatus, updateReportPenaltyStatus, assignBuildingToReport, buildings, addWarningToBuilding, addPenaltyToBuilding, vehicles, dispatchVehicleToReport }) => {
   const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState('');
   const [showPenaltyModal, setShowPenaltyModal] = useState<string | null>(null); // Holds buildingId
+  const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'week', 'overdue'
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'resolved'
 
   const stats = useMemo(() => {
     return reports.reduce(
@@ -72,6 +111,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
       return vehicles.find(v => v.assignedReportId === reportId);
   }
 
+  const filteredReports = useMemo(() => {
+    return reports
+        .filter(report => {
+            // Date filter
+            if (dateFilter === 'today' && !isToday(report.timestamp)) return false;
+            if (dateFilter === 'week' && !isThisWeek(report.timestamp)) return false;
+            if (dateFilter === 'overdue' && !isOverdue(report.timestamp, report.data.status)) return false;
+            return true;
+        })
+        .filter(report => {
+            // Status filter
+            if (statusFilter === 'pending' && (report.data.status !== 'Pending' && report.data.status !== 'In Progress')) return false;
+            if (statusFilter === 'resolved' && report.data.status !== 'Resolved') return false;
+            return true;
+        });
+  }, [reports, dateFilter, statusFilter]);
+  
+  // Sort reports to show Pending first, then In Progress, then newest first
+  const sortedReports = [...filteredReports].sort((a, b) => {
+    const statusOrder = { 'Pending': 1, 'In Progress': 2, 'Resolved': 3 };
+    if (statusOrder[a.data.status] < statusOrder[b.data.status]) return -1;
+    if (statusOrder[a.data.status] > statusOrder[b.data.status]) return 1;
+    return b.timestamp.getTime() - a.timestamp.getTime();
+  });
+
+
   const toggleExpand = (id: string) => {
     setExpandedId(prevId => (prevId === id ? null : id));
     setSelectedBuilding(''); // Reset building selection on collapse/expand
@@ -89,15 +154,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
       setShowPenaltyModal(null);
   };
   
-  // Sort reports to show Pending first, then In Progress, then newest first
-  const sortedReports = [...reports].sort((a, b) => {
-    const statusOrder = { 'Pending': 1, 'In Progress': 2, 'Resolved': 3 };
-    if (statusOrder[a.data.status] < statusOrder[b.data.status]) return -1;
-    if (statusOrder[a.data.status] > statusOrder[b.data.status]) return 1;
-    return b.timestamp.getTime() - a.timestamp.getTime();
-  });
-
-
   return (
     <div className="space-y-8">
       <div>
@@ -129,8 +185,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ reports, updateReportSt
 
       <div>
         <h3 className="text-2xl font-bold text-gray-800 mb-4">{t('allReports')}</h3>
+        
+        <Card className="p-4 mb-4">
+            <h4 className="text-lg font-semibold mb-3 text-gray-700">{t('filterReports')}</h4>
+            <div className="flex flex-col sm:flex-row gap-6">
+                <div>
+                    <label className="text-sm font-medium text-gray-500">{t('filterByDate')}</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        <FilterButton label={t('filterAll')} isActive={dateFilter === 'all'} onClick={() => setDateFilter('all')} />
+                        <FilterButton label={t('filterToday')} isActive={dateFilter === 'today'} onClick={() => setDateFilter('today')} />
+                        <FilterButton label={t('filterThisWeek')} isActive={dateFilter === 'week'} onClick={() => setDateFilter('week')} />
+                        <FilterButton label={t('filterOverdue')} isActive={dateFilter === 'overdue'} onClick={() => setDateFilter('overdue')} />
+                    </div>
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-gray-500">{t('filterByStatus')}</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        <FilterButton label={t('filterAll')} isActive={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
+                        <FilterButton label={t('pendingReports')} isActive={statusFilter === 'pending'} onClick={() => setStatusFilter('pending')} />
+                        <FilterButton label={t('resolvedReports')} isActive={statusFilter === 'resolved'} onClick={() => setStatusFilter('resolved')} />
+                    </div>
+                </div>
+            </div>
+             <p className="text-sm text-gray-500 mt-3">{t('showingReports', { count: sortedReports.length, total: reports.length })}</p>
+        </Card>
+
         <Card className="p-4 sm:p-6">
-          {reports.length > 0 ? (
+          {sortedReports.length > 0 ? (
             <div className="space-y-3">
               {sortedReports.map((report) => {
                 const isExpanded = expandedId === report.id;

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Badge, BadgeSlug, HistoryItem, WasteClassificationResult, ReportHistoryItem, ReportStatus, PenaltyStatus, Community, CommunityMember, CommunityMessage, Building, Penalty, Warning, PickupRequest, PickupStatus, BulkPickupRequest, BulkPickupStatus, ComplianceReport, Vehicle, VehicleStatus } from './types.ts';
+import { View, Badge, BadgeSlug, HistoryItem, WasteClassificationResult, ReportHistoryItem, ReportStatus, PenaltyStatus, Community, CommunityMember, CommunityMessage, Building, Penalty, Warning, PickupRequest, PickupStatus, BulkPickupRequest, BulkPickupStatus, ComplianceReport, Vehicle, VehicleStatus, EquipmentRequest } from './types.ts';
 import { BADGE_DEFINITIONS } from './constants.tsx';
 import Header from './components/Header.tsx';
 import Dashboard from './components/Dashboard.tsx';
@@ -17,6 +17,8 @@ import CommunityHub from './components/CommunityHub.tsx';
 import BuildingStatus from './components/BuildingStatus.tsx';
 import Marketplace from './components/Marketplace.tsx';
 import B2BPortal from './components/B2BPortal.tsx';
+import { useTranslation } from './i18n/useTranslation.ts';
+import { moderateChatMessage } from './services/geminiService.ts';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
@@ -24,6 +26,8 @@ const App: React.FC = () => {
   const [unlockedBadges, setUnlockedBadges] = useState<Set<BadgeSlug>>(new Set());
   const [reportCount, setReportCount] = useState<number>(0);
   
+  const { language } = useTranslation();
+
   const [history, setHistory] = useState<HistoryItem[]>(() => {
     try {
       const savedHistory = localStorage.getItem('appHistory');
@@ -158,6 +162,14 @@ const App: React.FC = () => {
       } catch (e) { return []; }
   });
 
+  // Waste Worker State
+  const [equipmentRequests, setEquipmentRequests] = useState<EquipmentRequest[]>(() => {
+      try {
+          const saved = localStorage.getItem('equipmentRequests');
+          return saved ? JSON.parse(saved) : [];
+      } catch (e) { return []; }
+  });
+
 
   // Persist state to localStorage
   useEffect(() => { localStorage.setItem('appHistory', JSON.stringify(history)); }, [history]);
@@ -168,6 +180,43 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('pickupRequests', JSON.stringify(pickupRequests)); }, [pickupRequests]);
   useEffect(() => { localStorage.setItem('bulkPickupRequests', JSON.stringify(bulkPickupRequests)); }, [bulkPickupRequests]);
   useEffect(() => { localStorage.setItem('vehicles', JSON.stringify(vehicles)); }, [vehicles]);
+  useEffect(() => { localStorage.setItem('equipmentRequests', JSON.stringify(equipmentRequests)); }, [equipmentRequests]);
+
+
+  // Real-time chat simulation
+  useEffect(() => {
+    const chatSimulator = setInterval(() => {
+        if (communities.length > 0 && Object.keys(communityMembers).length > 0) {
+            const randomCommunityIndex = Math.floor(Math.random() * communities.length);
+            const community = communities[randomCommunityIndex];
+            const members = communityMembers[community.id];
+
+            if (members && members.length > 0) {
+                const botMessage: CommunityMessage = {
+                    id: `msg-bot-${Date.now()}`,
+                    communityId: community.id,
+                    senderId: 'bot-001',
+                    senderName: 'Community Bot',
+                    text: `Let's organize a cleanup drive this weekend for the park area! Who's in?`,
+                    timestamp: new Date().toISOString()
+                };
+
+                setCommunityMessages(prev => {
+                    const currentMessages = prev[community.id] || [];
+                    if (currentMessages.length > 0 && currentMessages[currentMessages.length - 1].senderId === 'bot-001') {
+                        return prev;
+                    }
+                    return {
+                        ...prev,
+                        [community.id]: [...currentMessages, botMessage]
+                    };
+                });
+            }
+        }
+    }, 20000); // Every 20 seconds
+
+    return () => clearInterval(chatSimulator);
+  }, [communities, communityMembers]);
 
 
   const handleSetUserName = (name: string) => {
@@ -276,9 +325,10 @@ const App: React.FC = () => {
 
 
   // Community Handlers
-  const createCommunity = useCallback((name: string, description: string): Community => {
+  const createCommunity = useCallback((name: string, description: string, areaName: string): Community => {
+      const communityName = `${name.trim()} (${areaName})`;
       const newCommunity: Community = {
-          id: `comm-${Date.now()}`, name, description,
+          id: `comm-${Date.now()}`, name: communityName, description,
           creatorId: userId, creatorName: userName, timestamp: new Date().toISOString()
       };
       setCommunities(prev => [...prev, newCommunity]);
@@ -297,12 +347,20 @@ const App: React.FC = () => {
       });
   }, [userId, userName]);
 
-  const sendMessage = useCallback((communityId: string, text: string) => {
+  const sendMessage = useCallback(async (communityId: string, text: string): Promise<{ success: boolean; reason?: string }> => {
+      const moderationResult = await moderateChatMessage(text, language);
+
+      if (!moderationResult.isAppropriate) {
+          console.warn(`Message blocked: "${text}". Reason: ${moderationResult.reason}`);
+          return { success: false, reason: moderationResult.reason || "Message is inappropriate." };
+      }
+
       const newMessage: CommunityMessage = {
           id: `msg-${Date.now()}`, communityId, senderId: userId, senderName: userName, text, timestamp: new Date().toISOString()
       };
       setCommunityMessages(prev => ({ ...prev, [communityId]: [...(prev[communityId] || []), newMessage] }));
-  }, [userId, userName]);
+      return { success: true };
+  }, [userId, userName, language]);
 
   // Marketplace Handlers
   const addPickupRequest = useCallback((requestData: Omit<PickupRequest, 'id' | 'userId' | 'timestamp' | 'status'>) => {
@@ -359,6 +417,19 @@ const App: React.FC = () => {
     updateReportStatus(reportId, 'In Progress');
   }, [history, updateReportStatus]);
 
+  // Waste Worker Handlers
+  const addEquipmentRequest = useCallback((items: string[], authorityName: string) => {
+      const newRequest: EquipmentRequest = {
+          id: `equip-${Date.now()}`,
+          workerId: userId,
+          items,
+          authorityName,
+          status: 'Pending',
+          timestamp: new Date().toISOString(),
+      };
+      setEquipmentRequests(prev => [newRequest, ...prev]);
+  }, [userId]);
+
 
 
   useEffect(() => {
@@ -396,7 +467,7 @@ const App: React.FC = () => {
       case View.TRANSPARENCY_DASHBOARD:
         return <TransparencyDashboard reports={reports} />;
       case View.TRAINING:
-        return <TrainingHub addPoints={addPoints} unlockBadge={unlockBadge} />;
+        return <TrainingHub addPoints={addPoints} unlockBadge={unlockBadge} addEquipmentRequest={addEquipmentRequest} />;
       case View.COMMUNITY:
         return <CommunityHub
                     userId={userId}

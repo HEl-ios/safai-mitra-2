@@ -15,17 +15,56 @@ const centralBodies: Contact[] = [
 ];
 
 const stateData: { [key: string]: Contact[] } = {
-  delhi: [
+  'andaman-and-nicobar-islands': [{ nameKey: 'andamanNicobarPCCName', descKey: 'andamanNicobarPCCDesc', website: '#', phone: '#' }],
+  'andhra-pradesh': [{ nameKey: 'andhraPradeshPCBName', descKey: 'andhraPradeshPCBDesc', website: '#', phone: '#' }],
+  'arunachal-pradesh': [{ nameKey: 'arunachalPradeshPCBName', descKey: 'arunachalPradeshPCBDesc', website: '#', phone: '#' }],
+  'assam': [{ nameKey: 'assamPCBName', descKey: 'assamPCBDesc', website: '#', phone: '#' }],
+  'bihar': [{ nameKey: 'biharPCBName', descKey: 'biharPCBDesc', website: '#', phone: '#' }],
+  'chandigarh': [{ nameKey: 'chandigarhPCCName', descKey: 'chandigarhPCCDesc', website: '#', phone: '#' }],
+  'chhattisgarh': [{ nameKey: 'chhattisgarhPCBName', descKey: 'chhattisgarhPCBDesc', website: '#', phone: '#' }],
+  'dadra-and-nagar-haveli-and-daman-and-diu': [{ nameKey: 'dnhdDPCCName', descKey: 'dnhdDPCCDesc', website: '#', phone: '#' }],
+  'delhi': [
     { nameKey: 'dpccName', descKey: 'dpccDesc', website: 'http://www.dpcc.delhigovt.nic.in/', phone: 'tel:+91-11-23869299' },
     { nameKey: 'chintanName', descKey: 'chintanDesc', website: 'https://www.chintan-india.org/', phone: 'tel:+91-11-46574172' },
   ],
-  maharashtra: [
+  'goa': [{ nameKey: 'goaPCBName', descKey: 'goaPCBDesc', website: '#', phone: '#' }],
+  'gujarat': [{ nameKey: 'gujaratPCBName', descKey: 'gujaratPCBDesc', website: '#', phone: '#' }],
+  'haryana': [{ nameKey: 'haryanaPCBName', descKey: 'haryanaPCBDesc', website: '#', phone: '#' }],
+  'himachal-pradesh': [{ nameKey: 'himachalPradeshPCBName', descKey: 'himachalPradeshPCBDesc', website: '#', phone: '#' }],
+  'jammu-and-kashmir': [{ nameKey: 'jammuKashmirPCCName', descKey: 'jammuKashmirPCCDesc', website: '#', phone: '#' }],
+  'jharkhand': [{ nameKey: 'jharkhandPCBName', descKey: 'jharkhandPCBDesc', website: '#', phone: '#' }],
+  'karnataka': [
+    { nameKey: 'swmCellName', descKey: 'swmCellDesc', website: 'https://swm.ulbdict.gov.in/', phone: 'tel:+91-80-2222-2222' },
+  ],
+  'kerala': [{ nameKey: 'keralaPCBName', descKey: 'keralaPCBDesc', website: '#', phone: '#' }],
+  'ladakh': [{ nameKey: 'ladakhPCCName', descKey: 'ladakhPCCDesc', website: '#', phone: '#' }],
+  'lakshadweep': [{ nameKey: 'lakshadweepPCCName', descKey: 'lakshadweepPCCDesc', website: '#', phone: '#' }],
+  'madhya-pradesh': [{ nameKey: 'madhyaPradeshPCBName', descKey: 'madhyaPradeshPCBDesc', website: '#', phone: '#' }],
+  'maharashtra': [
     { nameKey: 'mpcbName', descKey: 'mpcbDesc', website: 'https://mpcb.gov.in/', phone: 'tel:+91-22-24020781' },
   ],
-  karnataka: [
-    { nameKey: 'swmCellName', descKey: 'swmCellDesc', website: 'https://swm.ulbdict.gov.in/', phone: 'tel:+91-80-2222-2222' }, // Example number
-  ],
+  'manipur': [{ nameKey: 'manipurPCBName', descKey: 'manipurPCBDesc', website: '#', phone: '#' }],
+  'meghalaya': [{ nameKey: 'meghalayaPCBName', descKey: 'meghalayaPCBDesc', website: '#', phone: '#' }],
+  'mizoram': [{ nameKey: 'mizoramPCBName', descKey: 'mizoramPCBDesc', website: '#', phone: '#' }],
+  'nagaland': [{ nameKey: 'nagalandPCBName', descKey: 'nagalandPCBDesc', website: '#', phone: '#' }],
+  'odisha': [{ nameKey: 'odishaPCBName', descKey: 'odishaPCBDesc', website: '#', phone: '#' }],
+  'puducherry': [{ nameKey: 'puducherryPCCName', descKey: 'puducherryPCCDesc', website: '#', phone: '#' }],
+  'punjab': [{ nameKey: 'punjabPCBName', descKey: 'punjabPCBDesc', website: '#', phone: '#' }],
+  'rajasthan': [{ nameKey: 'rajasthanPCBName', descKey: 'rajasthanPCBDesc', website: '#', phone: '#' }],
+  'sikkim': [{ nameKey: 'sikkimPCBName', descKey: 'sikkimPCBDesc', website: '#', phone: '#' }],
+  'tamil-nadu': [{ nameKey: 'tamilNaduPCBName', descKey: 'tamilNaduPCBDesc', website: '#', phone: '#' }],
+  'telangana': [{ nameKey: 'telanganaPCBName', descKey: 'telanganaPCBDesc', website: '#', phone: '#' }],
+  'tripura': [{ nameKey: 'tripuraPCBName', descKey: 'tripuraPCBDesc', website: '#', phone: '#' }],
+  'uttar-pradesh': [{ nameKey: 'uttarPradeshPCBName', descKey: 'uttarPradeshPCBDesc', website: '#', phone: '#' }],
+  'uttarakhand': [{ nameKey: 'uttarakhandPCBName', descKey: 'uttarakhandPCBDesc', website: '#', phone: '#' }],
+  'west-bengal': [{ nameKey: 'westBengalPCBName', descKey: 'westBengalPCBDesc', website: '#', phone: '#' }],
 };
+
+const allStatesAndUTs = Object.keys(stateData).map(key => {
+    const name = key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return { key, name };
+}).sort((a, b) => a.name.localeCompare(b.name));
+
 
 const ContactCard: React.FC<{ contact: Contact }> = ({ contact }) => {
     const { t } = useTranslation();
@@ -73,9 +112,9 @@ const AuthoritiesNGOs: React.FC = () => {
             className="w-full rounded-lg border-gray-300 shadow-sm px-3 py-2 text-base focus:border-green-500 focus:ring-2 focus:ring-green-200 mb-4"
           >
             <option value="">{t('selectState')}</option>
-            <option value="delhi">Delhi</option>
-            <option value="maharashtra">Maharashtra</option>
-            <option value="karnataka">Karnataka</option>
+            {allStatesAndUTs.map(state => (
+              <option key={state.key} value={state.key}>{state.name}</option>
+            ))}
           </select>
 
           {selectedState && stateData[selectedState] && (

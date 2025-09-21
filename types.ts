@@ -60,6 +60,16 @@ export interface QuizAnalysis {
   nextSteps: string;
 }
 
+// Added: New type for segregation game analysis.
+export interface SegregationAnalysis {
+    performanceSummary: string;
+    improvementTips: {
+        item: string;
+        tip: string;
+    }[];
+    suggestedVideos: string[];
+}
+
 export type BadgeSlug = 'first-scan' | 'quiz-master' | 'eco-reporter' | 'chat-champ' | 'novice-recycler' | 'community-helper' | 'scrap-seller' | 'corporate-citizen';
 
 export interface Badge {
@@ -127,6 +137,11 @@ export interface CommunityMessage {
     senderName: string;
     text: string;
     timestamp: string;
+}
+
+export interface ChatModerationResult {
+    isAppropriate: boolean;
+    reason?: string;
 }
 
 export type PenaltyType = 'Fine' | 'CollectionSuspended';
@@ -216,4 +231,16 @@ export interface Vehicle {
         latitude: number;
         longitude: number;
     };
+}
+
+// Waste Worker Equipment Request Types
+export type EquipmentRequestStatus = 'Pending' | 'Approved' | 'Rejected';
+
+export interface EquipmentRequest {
+    id: string;
+    workerId: string;
+    items: string[];
+    authorityName: string;
+    status: EquipmentRequestStatus;
+    timestamp: string;
 }

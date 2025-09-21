@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../../i18n/useTranslation.ts';
 // Fix: Import icons for training modules.
-import { UsersIcon, BriefcaseIcon, ArrowLeftIcon, GraduationCapIcon, BookOpenIcon, ScanLineIcon, ShieldIcon, DollarSignIcon, BrushIcon, BuildingIcon, PlayCircleIcon } from '../common/Icons.tsx';
+import { UsersIcon, BriefcaseIcon, ArrowLeftIcon, GraduationCapIcon, BookOpenIcon, ScanLineIcon, ShieldIcon, DollarSignIcon, BrushIcon, BuildingIcon, PlayCircleIcon, WrenchIcon } from '../common/Icons.tsx';
 import Card from '../common/Card.tsx';
-import { BadgeSlug } from '../../types.ts';
+import { BadgeSlug, EquipmentRequest } from '../../types.ts';
 import SegregationMasterclass from './SegregationMasterclass.tsx';
 import EducationalHub from './EducationalHub.tsx';
 import RecyclableIdentifier from './RecyclableIdentifier.tsx';
@@ -12,12 +12,14 @@ import FinancialLiteracy from './FinancialLiteracy.tsx';
 import UpcycledArtGenerator from '../UpcycledArtGenerator.tsx';
 import AuthoritiesNGOs from './AuthoritiesNGOs.tsx';
 import TutorialVideos from './TutorialVideos.tsx';
+import GetEquipment from './GetEquipment.tsx';
 
-type TrainingView = 'main' | 'segregation' | 'education' | 'identifier' | 'safety' | 'financial' | 'upcycledArt' | 'authorities' | 'tutorialVideos';
+type TrainingView = 'main' | 'segregation' | 'education' | 'identifier' | 'safety' | 'financial' | 'upcycledArt' | 'authorities' | 'tutorialVideos' | 'getEquipment';
 
 interface TrainingHubProps {
   addPoints: (points: number) => void;
   unlockBadge: (slug: BadgeSlug) => void;
+  addEquipmentRequest: (items: string[], authorityName: string) => void;
 }
 
 const TrainingCard: React.FC<{
@@ -44,7 +46,7 @@ const SubModuleWrapper: React.FC<{ title: string; onBack: () => void; children: 
   </div>
 );
 
-const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => {
+const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge, addEquipmentRequest }) => {
   const { t } = useTranslation();
   const [citizenModule, setCitizenModule] = useState<TrainingView | null>(null);
   const [workerModule, setWorkerModule] = useState<TrainingView | null>(null);
@@ -62,6 +64,7 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
     { view: 'identifier', icon: <ScanLineIcon />, title: t('trainingIdentifierTitle'), description: t('trainingIdentifierDescription') },
     { view: 'safety', icon: <ShieldIcon />, title: t('trainingSafetyTitle'), description: t('trainingSafetyDescription') },
     { view: 'financial', icon: <DollarSignIcon />, title: t('trainingFinancialTitle'), description: t('trainingFinancialDescription') },
+    { view: 'getEquipment', icon: <WrenchIcon />, title: t('trainingGetEquipmentTitle'), description: t('trainingGetEquipmentDescription') },
   ];
 
   const renderContent = () => {
@@ -72,6 +75,8 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
     if (workerModule === 'identifier') return <SubModuleWrapper title={t('wasteWorkerTrainingTitle')} onBack={() => setWorkerModule(null)}><RecyclableIdentifier addPoints={addPoints} unlockBadge={unlockBadge} /></SubModuleWrapper>;
     if (workerModule === 'safety') return <SubModuleWrapper title={t('wasteWorkerTrainingTitle')} onBack={() => setWorkerModule(null)}><SafetyTraining /></SubModuleWrapper>;
     if (workerModule === 'financial') return <SubModuleWrapper title={t('wasteWorkerTrainingTitle')} onBack={() => setWorkerModule(null)}><FinancialLiteracy /></SubModuleWrapper>;
+    if (workerModule === 'getEquipment') return <SubModuleWrapper title={t('wasteWorkerTrainingTitle')} onBack={() => setWorkerModule(null)}><GetEquipment addEquipmentRequest={addEquipmentRequest} /></SubModuleWrapper>;
+
 
     if (authorityModule === 'authorities') return <SubModuleWrapper title={t('trainingAuthoritiesTitle')} onBack={() => setAuthorityModule(null)}><AuthoritiesNGOs /></SubModuleWrapper>;
     
@@ -103,7 +108,7 @@ const TrainingHub: React.FC<TrainingHubProps> = ({ addPoints, unlockBadge }) => 
                 <p className="text-gray-500">{t('wasteWorkerTrainingDescription')}</p>
             </div>
           </div>
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {workerModules.map(m => (
               <TrainingCard key={m.view} icon={m.icon} title={m.title} description={m.description} onClick={() => setWorkerModule(m.view as TrainingView)} />
             ))}

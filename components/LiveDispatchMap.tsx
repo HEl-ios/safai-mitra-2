@@ -49,8 +49,15 @@ const LiveDispatchMap: React.FC<LiveDispatchMapProps> = ({ reports, vehicles }) 
 
     return (
         <div className="relative w-full h-96 bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
-            {/* Map background */}
-            <div className="absolute inset-0 bg-repeat" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
+            {/* Satellite map background */}
+            <div 
+                className="absolute inset-0 bg-cover bg-center" 
+                style={{ backgroundImage: `url('https://images.unsplash.com/photo-1542901389-e1b19c158959?q=80&w=2070&auto=format&fit=crop')` }}
+                aria-hidden="true"
+            >
+                {/* Add a subtle overlay to make markers stand out */}
+                <div className="absolute inset-0 bg-black/20"></div>
+            </div>
             
             {/* Dispatch Lines */}
             {vehicles.map(vehicle => {
@@ -62,7 +69,7 @@ const LiveDispatchMap: React.FC<LiveDispatchMapProps> = ({ reports, vehicles }) 
                 const reportPos = getPosition(report.data.location);
                 const lineStyle = getLineStyle(vehiclePos, reportPos);
                 
-                return <div key={`line-${vehicle.id}`} className="absolute h-px bg-blue-500/70" style={lineStyle}></div>
+                return <div key={`line-${vehicle.id}`} className="absolute h-[2px] bg-cyan-300/90 shadow-lg" style={lineStyle}></div>
             })}
             
             {/* Report Markers */}
@@ -79,9 +86,9 @@ const LiveDispatchMap: React.FC<LiveDispatchMapProps> = ({ reports, vehicles }) 
             {/* Vehicle Markers */}
             {vehicles.map(vehicle => {
                 let colorClass = 'text-gray-600';
-                if (vehicle.status === VehicleStatus.IDLE) colorClass = 'text-green-600';
-                if (vehicle.status === VehicleStatus.EN_ROUTE) colorClass = 'text-blue-600';
-                if (vehicle.status === VehicleStatus.COLLECTING) colorClass = 'text-yellow-600';
+                if (vehicle.status === VehicleStatus.IDLE) colorClass = 'text-green-400';
+                if (vehicle.status === VehicleStatus.EN_ROUTE) colorClass = 'text-blue-400';
+                if (vehicle.status === VehicleStatus.COLLECTING) colorClass = 'text-yellow-400';
                 
                 return (
                      <div
@@ -90,7 +97,7 @@ const LiveDispatchMap: React.FC<LiveDispatchMapProps> = ({ reports, vehicles }) 
                         style={getPosition(vehicle.currentLocation)}
                         title={`${vehicle.id} - ${vehicle.status}`}
                     >
-                        <TruckIcon className={`w-6 h-6 ${colorClass} transition-transform group-hover:scale-125`} />
+                        <TruckIcon className={`w-6 h-6 ${colorClass} transition-transform group-hover:scale-125 drop-shadow-[0_1px_1px_rgba(0,0,0,0.7)]`} />
                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block px-2 py-0.5 text-xs text-white bg-gray-800 rounded-md">
                             {vehicle.id}
                         </span>

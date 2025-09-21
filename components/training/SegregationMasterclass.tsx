@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../common/Card.tsx';
 import { useTranslation } from '../../i18n/useTranslation.ts';
+import { generateSegregationAnalysis } from '../../services/geminiService.ts';
+import { SegregationAnalysis } from '../../types.ts';
+import Spinner from '../common/Spinner.tsx';
+import { PlayCircleIcon } from '../common/Icons.tsx';
 
 interface SegregationMasterclassProps {
   addPoints: (points: number) => void;
@@ -23,11 +27,38 @@ const questions: Question[] = [
 const options = ['Wet Waste', 'Dry Waste', 'Hazardous'];
 
 const SegregationMasterclass: React.FC<SegregationMasterclassProps> = ({ addPoints }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isFinished, setIsFinished] = useState(false);
+  const [incorrectAnswers, setIncorrectAnswers] = useState<Question[]>([]);
+
+  // AI Analysis State
+  const [analysis, setAnalysis] = useState<SegregationAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  useEffect(() => {
+      if (isFinished) {
+          const fetchAnalysis = async () => {
+              setIsAnalyzing(true);
+              setAnalysis(null);
+              setAnalysisError(null);
+              try {
+                  const incorrectItems = incorrectAnswers.map(q => q.item);
+                  const result = await generateSegregationAnalysis(score, questions.length * 10, incorrectItems, language);
+                  setAnalysis(result);
+              } catch (error) {
+                  console.error("Failed to get segregation analysis:", error);
+                  setAnalysisError(t('segregationAnalysisError'));
+              } finally {
+                  setIsAnalyzing(false);
+              }
+          };
+          fetchAnalysis();
+      }
+  }, [isFinished, score, incorrectAnswers, language, t]);
 
   const handleAnswer = (answer: string) => {
     if (feedback) return;
@@ -38,6 +69,7 @@ const SegregationMasterclass: React.FC<SegregationMasterclassProps> = ({ addPoin
       setFeedback('correct');
     } else {
       setFeedback('incorrect');
+      setIncorrectAnswers(prev => [...prev, questions[currentQuestionIndex]]);
     }
 
     setTimeout(() => {
@@ -55,20 +87,71 @@ const SegregationMasterclass: React.FC<SegregationMasterclassProps> = ({ addPoin
       setScore(0);
       setFeedback(null);
       setIsFinished(false);
+      setIncorrectAnswers([]);
+      setAnalysis(null);
+      setIsAnalyzing(false);
+      setAnalysisError(null);
   }
 
   if (isFinished) {
       return (
-          <Card className="p-8 text-center">
-            <h2 className="text-2xl font-bold text-green-600 mb-2">{t('segregationComplete')}</h2>
-            <p className="text-gray-600 mb-4">{t('segregationFinalScore', {score: score})}</p>
-            <button
-                onClick={restartGame}
-                className="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors"
-            >
-                {t('segregationRestart')}
-            </button>
+          <div className="space-y-6">
+            <Card className="p-8 text-center">
+              <h2 className="text-2xl font-bold text-green-600 mb-2">{t('segregationComplete')}</h2>
+              <p className="text-gray-600 mb-4">{t('segregationFinalScore', {score: score})}</p>
+              <button
+                  onClick={restartGame}
+                  className="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                  {t('segregationRestart')}
+              </button>
+            </Card>
+
+            <Card className="p-6 text-left">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 text-center">{t('aiSegregationAnalysisTitle')}</h3>
+              {isAnalyzing && (
+                  <div className="flex flex-col items-center gap-2">
+                      <Spinner />
+                      <p className="text-gray-600">{t('generatingSegregationAnalysis')}</p>
+                  </div>
+              )}
+              {analysisError && <p className="text-center text-red-500 bg-red-50 p-3 rounded-lg">{analysisError}</p>}
+              {analysis && (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-bold text-gray-800 tracking-wide uppercase text-xs mb-1">{t('performanceSummary')}</h4>
+                    <p className="text-gray-600 text-sm italic">"{analysis.performanceSummary}"</p>
+                  </div>
+                  {analysis.improvementTips.length > 0 && (
+                    <div>
+                      <h4 className="font-bold text-gray-800 tracking-wide uppercase text-xs mb-2">{t('improvementTips')}</h4>
+                      <ul className="space-y-2">
+                          {analysis.improvementTips.map((tip, index) => (
+                              <li key={index} className="p-2 bg-yellow-50/50 border-l-4 border-yellow-400 rounded-r-md">
+                                  <p className="font-semibold text-yellow-900">{tip.item}</p>
+                                  <p className="text-sm text-yellow-800">{tip.tip}</p>
+                              </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+                  {analysis.suggestedVideos.length > 0 && (
+                      <div>
+                        <h4 className="font-bold text-gray-800 tracking-wide uppercase text-xs mb-2">{t('suggestedVideos')}</h4>
+                        <ul className="space-y-2">
+                            {analysis.suggestedVideos.map((videoTitle, index) => (
+                                <li key={index} className="flex items-center gap-2 p-2 bg-gray-100 rounded-md text-sm text-gray-700 cursor-pointer hover:bg-gray-200">
+                                  <PlayCircleIcon className="w-5 h-5 text-red-500 flex-shrink-0" />
+                                  <span>{videoTitle}</span>
+                                </li>
+                            ))}
+                        </ul>
+                      </div>
+                  )}
+                </div>
+              )}
           </Card>
+        </div>
       );
   }
 

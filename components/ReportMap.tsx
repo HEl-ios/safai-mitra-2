@@ -44,8 +44,15 @@ const ReportMap: React.FC<ReportMapProps> = ({ reports }) => {
 
     return (
         <div className="relative w-full h-80 bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
-            {/* Simple map background pattern */}
-            <div className="absolute inset-0 bg-repeat" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
+            {/* Satellite map background */}
+            <div 
+                className="absolute inset-0 bg-cover bg-center" 
+                style={{ backgroundImage: `url('https://images.unsplash.com/photo-1542901389-e1b19c158959?q=80&w=2070&auto=format&fit=crop')` }}
+                aria-hidden="true"
+            >
+                {/* Add a subtle overlay to make markers stand out */}
+                <div className="absolute inset-0 bg-black/20"></div>
+            </div>
             
             {locatedReports.map(report => (
                 <div

@@ -1,7 +1,3 @@
-
-
-
-
 import React from 'react';
 import { View, Badge, HistoryItem, ReportHistoryItem } from '../types.ts';
 import Card from './common/Card.tsx';
@@ -10,6 +6,7 @@ import { useTranslation } from '../i18n/useTranslation.ts';
 import HistoryList from './HistoryList.tsx';
 import ReportMap from './ReportMap.tsx';
 import NotificationManager from './NotificationManager.tsx';
+import CommunityActivityMap from './CommunityActivityMap.tsx';
 
 interface DashboardProps {
   setView: (view: View) => void;
@@ -143,6 +140,13 @@ const Dashboard: React.FC<DashboardProps> = ({ setView, unlockedBadges, history,
       
       <div>
         <NotificationManager />
+      </div>
+
+      <div>
+        <h3 className="text-2xl font-bold text-gray-800 mb-4">{t('communityActivityMapTitle')}</h3>
+        <Card className="p-4 sm:p-6">
+          <CommunityActivityMap reports={reportHistory} />
+        </Card>
       </div>
 
       <div>

@@ -7,12 +7,14 @@ interface CommunityChatProps {
     community: Community;
     messages: CommunityMessage[];
     currentUser: CommunityMember;
-    onSendMessage: (communityId: string, text: string) => void;
+    onSendMessage: (communityId: string, text: string) => Promise<{ success: boolean; reason?: string }>;
 }
 
 const CommunityChat: React.FC<CommunityChatProps> = ({ community, messages, currentUser, onSendMessage }) => {
     const { t } = useTranslation();
     const [input, setInput] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const [sendError, setSendError] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -23,11 +25,20 @@ const CommunityChat: React.FC<CommunityChatProps> = ({ community, messages, curr
         scrollToBottom();
     }, [messages]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (input.trim()) {
-            onSendMessage(community.id, input.trim());
-            setInput('');
+        if (input.trim() && !isSending) {
+            setIsSending(true);
+            setSendError(null);
+            const result = await onSendMessage(community.id, input.trim());
+            if (result.success) {
+                setInput('');
+            } else {
+                setSendError(result.reason || "Your message was blocked by moderation.");
+                // Clear error after a few seconds
+                setTimeout(() => setSendError(null), 4000);
+            }
+            setIsSending(false);
         }
     };
 
@@ -66,11 +77,13 @@ const CommunityChat: React.FC<CommunityChatProps> = ({ community, messages, curr
                         onChange={(e) => setInput(e.target.value)}
                         placeholder={t('typeMessage')}
                         className="flex-1 block w-full rounded-full border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm px-4 py-2"
+                        disabled={isSending}
                     />
-                    <button type="submit" disabled={!input.trim()} className="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 transition-colors disabled:bg-gray-400">
-                        <SendIcon className="w-5 h-5" />
+                    <button type="submit" disabled={!input.trim() || isSending} className="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-wait flex items-center justify-center w-11 h-11">
+                        {isSending ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : <SendIcon className="w-5 h-5" />}
                     </button>
                 </form>
+                 {sendError && <p className="text-xs text-red-500 text-center mt-2">{sendError}</p>}
             </div>
         </div>
     );

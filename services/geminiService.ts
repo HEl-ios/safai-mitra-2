@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, GenerateContentResponse, Chat } from "@google/genai";
-import { WasteClassificationResult, QuizQuestion, Facility, QuizAnalysis, WasteMediaAuthenticationResult, ReportAnalysis, HighValueRecyclableResult } from '../types.ts';
+import { WasteClassificationResult, QuizQuestion, Facility, QuizAnalysis, WasteMediaAuthenticationResult, ReportAnalysis, HighValueRecyclableResult, ChatModerationResult, SegregationAnalysis } from '../types.ts';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -341,6 +341,53 @@ export const generateUpcycledArt = async (material: string, ideaPrompt: string):
     }
 };
 
+const chatModerationSchema = {
+    type: Type.OBJECT,
+    properties: {
+        isAppropriate: {
+            type: Type.BOOLEAN,
+            description: "True if the message is appropriate for a family-friendly, on-topic community forum about environmentalism. False otherwise."
+        },
+        reason: {
+            type: Type.STRING,
+            description: "If inappropriate, a brief, user-friendly explanation for why the message was blocked (e.g., 'Contains offensive language', 'Off-topic spam')."
+        }
+    },
+    required: ["isAppropriate"]
+};
+
+export const moderateChatMessage = async (message: string, language: 'en' | 'hi'): Promise<ChatModerationResult> => {
+    try {
+        const langInstruction = language === 'hi' ? "Provide your response in Hindi." : "Provide your response in English.";
+        const prompt = `You are a content moderator for an environmental awareness app's community chat. The community is family-friendly and focused on topics like waste management, recycling, and local cleanup efforts.
+        Analyze the following user message: "${message}"
+        Is this message appropriate? It is inappropriate if it contains:
+        - Hate speech, harassment, or personal attacks.
+        - Profanity or offensive language.
+        - Spam, advertisements, or irrelevant links.
+        - Content completely unrelated to environmental topics.
+        Use the provided JSON schema for your response. Be strict in your moderation. ${langInstruction}`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: chatModerationSchema,
+                temperature: 0.1,
+            },
+        });
+
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as ChatModerationResult;
+    } catch (error) {
+        console.error("Error moderating chat message:", error);
+        // Fail-safe: if moderation fails, assume it's appropriate to not block legit messages.
+        return { isAppropriate: true };
+    }
+};
+
+
 export const createChat = (language: 'en' | 'hi'): Chat => {
     const systemInstruction = language === 'hi'
       ? "आप सफाई मित्र हैं, अपशिष्ट प्रबंधन और पर्यावरणीय स्थिरता में विशेषज्ञ एक एआई सहायक। आपका लक्ष्य सटीक, स्पष्ट और उत्साहजनक मार्गदर्शन प्रदान करना है। जब विशिष्ट वस्तुओं के बारे में पूछा जाए, तो रीसाइक्लिंग, कंपोस्टिंग और उचित निपटान पर व्यावहारिक सलाह दें। यदि कोई प्रश्न आपकी विशेषज्ञता से बाहर है, तो विनम्रता से बताएं कि आप पर्यावरणीय विषयों में विशेषज्ञ हैं। सकारात्मक और सहायक लहजा बनाए रखें। सूचियों और जोर देने के लिए मार्कडाउन का उपयोग करें। केवल हिंदी में जवाब दें।"
@@ -493,5 +540,91 @@ export const generateQuizAnalysis = async (score: number, totalQuestions: number
     } catch (error) {
       console.error("Error generating quiz analysis:", error);
       throw new Error("Failed to generate quiz analysis from the AI.");
+    }
+};
+
+export const getAreaFromCoordinates = async (latitude: number, longitude: number, language: 'en' | 'hi'): Promise<string> => {
+    try {
+        const langInstruction = language === 'hi' ? "in Hindi" : "in English";
+        const prompt = `Based on latitude ${latitude} and longitude ${longitude}, what is the concise name of the local neighborhood, administrative ward, or area? Respond with only the name, for example: 'Sector 15', 'Green Park', or 'Ward 7'. Keep the response under 5 words. Respond ${langInstruction}.`;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                tools: [{ googleSearch: {} }],
+            },
+        });
+
+        const areaName = response.text.trim();
+        if (!areaName) {
+            throw new Error("AI returned an empty area name.");
+        }
+        return areaName;
+
+    } catch (error) {
+        console.error("Error getting area from coordinates:", error);
+        throw new Error("Failed to determine area name from coordinates.");
+    }
+};
+
+const segregationAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        performanceSummary: {
+            type: Type.STRING,
+            description: "A short, encouraging summary of the user's performance (1-2 sentences)."
+        },
+        improvementTips: {
+            type: Type.ARRAY,
+            description: "An array of specific tips for each item the user got wrong.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    item: { type: Type.STRING, description: "The name of the item the user incorrectly classified." },
+                    tip: { type: Type.STRING, description: "A helpful tip explaining the correct classification for this item." }
+                },
+                required: ["item", "tip"]
+            }
+        },
+        suggestedVideos: {
+            type: Type.ARRAY,
+            description: "A list of 2-3 relevant video tutorial titles the user should watch to learn more.",
+            items: { type: Type.STRING }
+        }
+    },
+    required: ["performanceSummary", "improvementTips", "suggestedVideos"]
+};
+
+export const generateSegregationAnalysis = async (score: number, totalQuestions: number, incorrectItems: string[], language: 'en' | 'hi'): Promise<SegregationAnalysis> => {
+    try {
+        const langInstruction = language === 'hi' ? "प्रतिक्रिया हिंदी में होनी चाहिए।" : "The response should be in English.";
+        const incorrectItemList = incorrectItems.length > 0 ? `They made mistakes on the following items: ${incorrectItems.join(', ')}.` : "They got a perfect score!";
+        
+        const prompt = `As an encouraging waste management coach, analyze a user's performance in a waste segregation game. They scored ${score} out of ${totalQuestions}. ${incorrectItemList}
+        
+        Your task is to:
+        1. Provide a positive, one-sentence summary of their performance.
+        2. For each incorrect item, provide a clear, concise tip explaining the correct way to segregate it. If there were no incorrect items, this array should be empty.
+        3. Suggest 2-3 relevant video tutorial titles that would help them improve their knowledge.
+        
+        Adhere to the provided JSON schema. Keep the tone supportive and educational. ${langInstruction}`;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: segregationAnalysisSchema,
+                temperature: 0.7,
+            },
+        });
+
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as SegregationAnalysis;
+
+    } catch (error) {
+        console.error("Error generating segregation analysis:", error);
+        throw new Error("Failed to generate segregation analysis from the AI.");
     }
 };

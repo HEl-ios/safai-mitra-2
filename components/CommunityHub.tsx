@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../i18n/useTranslation.ts';
 import { Community, CommunityMember, CommunityMessage } from '../types.ts';
-import { UsersIcon, PlusCircleIcon, ArrowLeftIcon } from './common/Icons.tsx';
+import { UsersIcon, PlusCircleIcon, ArrowLeftIcon, MapPinIcon } from './common/Icons.tsx';
 import Card from './common/Card.tsx';
 import CommunityChat from './CommunityChat.tsx';
+import { getAreaFromCoordinates } from '../services/geminiService.ts';
+import Spinner from './common/Spinner.tsx';
 
 interface CommunityHubProps {
     userId: string;
@@ -11,20 +13,46 @@ interface CommunityHubProps {
     communities: Community[];
     communityMembers: Record<string, CommunityMember[]>;
     communityMessages: Record<string, CommunityMessage[]>;
-    createCommunity: (name: string, description: string) => Community;
+    createCommunity: (name: string, description: string, areaName: string) => Community;
     joinCommunity: (communityId: string) => void;
-    sendMessage: (communityId: string, text: string) => void;
+    sendMessage: (communityId: string, text: string) => Promise<{ success: boolean; reason?: string; }>;
 }
 
-const CreateCommunity: React.FC<{ onCreate: (name: string, description: string) => void }> = ({ onCreate }) => {
+interface CreateCommunityProps {
+    onCreate: (name: string, description: string, areaName: string) => void;
+    onAreaDetect: () => Promise<string | null>;
+}
+
+const CreateCommunity: React.FC<CreateCommunityProps> = ({ onCreate, onAreaDetect }) => {
     const { t } = useTranslation();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [isDetecting, setIsDetecting] = useState(true);
+    const [detectedArea, setDetectedArea] = useState<string | null>(null);
+    const [detectionError, setDetectionError] = useState<string | null>(null);
+    
+    useEffect(() => {
+        const runDetection = async () => {
+            setIsDetecting(true);
+            setDetectionError(null);
+            const area = await onAreaDetect();
+            if (area) {
+                setDetectedArea(area);
+            } else {
+                setDetectionError('Could not automatically detect your area. A generic location name will be used.');
+                setDetectedArea('Community Area'); // Fallback value
+            }
+            setIsDetecting(false);
+        };
+        runDetection();
+    }, [onAreaDetect]);
+
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const areaToUse = detectedArea || "Community Area";
         if (name.trim() && description.trim()) {
-            onCreate(name.trim(), description.trim());
+            onCreate(name.trim(), description.trim(), areaToUse);
         }
     };
 
@@ -41,7 +69,30 @@ const CreateCommunity: React.FC<{ onCreate: (name: string, description: string) 
                         <label htmlFor="comm-desc" className="block text-sm font-medium text-gray-700">{t('communityDescription')}</label>
                         <textarea id="comm-desc" value={description} onChange={e => setDescription(e.target.value)} placeholder={t('communityDescriptionPlaceholder')} rows={3} className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" required />
                     </div>
-                    <button type="submit" className="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400" disabled={!name.trim() || !description.trim()}>{t('createButton')}</button>
+                    
+                    <div className="p-3 bg-gray-100 rounded-lg text-sm">
+                        {isDetecting ? (
+                            <div className="flex items-center gap-2 text-gray-600">
+                                <Spinner />
+                                <p>Detecting your location...</p>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <MapPinIcon className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                <div>
+                                    <p className="font-semibold text-gray-800">
+                                        Community Location: {detectedArea}
+                                    </p>
+                                    {detectionError && <p className="text-xs text-yellow-700">{detectionError}</p>}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-xs text-center text-gray-500 -mt-2">
+                        The detected location will be automatically added to your community name.
+                    </p>
+
+                    <button type="submit" className="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400" disabled={!name.trim() || !description.trim() || isDetecting}>{t('createButton')}</button>
                 </form>
             </Card>
         </div>
@@ -84,16 +135,53 @@ const JoinCommunity: React.FC<{ allCommunities: Community[], myCommunities: Comm
 };
 
 const CommunityHub: React.FC<CommunityHubProps> = (props) => {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const [view, setView] = useState<'main' | 'create' | 'join' | 'chat'>('main');
     const [activeCommunity, setActiveCommunity] = useState<Community | null>(null);
+    const [areaDetectionError, setAreaDetectionError] = useState<string | null>(null);
 
     const myCommunities = props.communities.filter(c => 
         props.communityMembers[c.id]?.some(m => m.userId === props.userId)
     );
     
-    const handleCreateCommunity = (name: string, description: string) => {
-        const newCommunity = props.createCommunity(name, description);
+    const detectArea = async (): Promise<string | null> => {
+        setAreaDetectionError(null);
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+                setAreaDetectionError("Geolocation is not supported by your browser.");
+                resolve(null);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    try {
+                        const { latitude, longitude } = position.coords;
+                        const areaName = await getAreaFromCoordinates(latitude, longitude, language);
+                        resolve(areaName);
+                    } catch (e) {
+                        console.error(e);
+                        setAreaDetectionError((e as Error).message);
+                        resolve(null);
+                    }
+                },
+                (geoError) => {
+                    let message = "An unknown error occurred.";
+                    if (geoError.code === geoError.PERMISSION_DENIED) {
+                        message = "Location access was denied. Please enable it in your browser settings.";
+                    } else if (geoError.code === geoError.POSITION_UNAVAILABLE) {
+                        message = "Location information is unavailable.";
+                    }
+                    setAreaDetectionError(message);
+                    resolve(null);
+                },
+                { timeout: 10000 }
+            );
+        });
+    };
+
+    const handleCreateCommunity = (name: string, description: string, areaName: string) => {
+        const newCommunity = props.createCommunity(name, description, areaName);
         setActiveCommunity(newCommunity);
         setView('chat');
     }
@@ -110,7 +198,7 @@ const CommunityHub: React.FC<CommunityHubProps> = (props) => {
     const renderContent = () => {
         switch (view) {
             case 'create':
-                return <CreateCommunity onCreate={handleCreateCommunity} />;
+                return <CreateCommunity onCreate={handleCreateCommunity} onAreaDetect={detectArea} />;
             case 'join':
                 return <JoinCommunity allCommunities={props.communities} myCommunities={myCommunities} onJoin={handleJoinCommunity} onOpen={openChat} userId={props.userId} />;
             case 'chat':
